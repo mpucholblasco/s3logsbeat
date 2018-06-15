@@ -3,8 +3,31 @@
 ############################# S3logsbeat ######################################
 
 s3logsbeat:
-  # Defines how often an event is sent to the output
-  period: 1s
+  # SQS inputs
+  inputs:
+    -
+      # SQS information
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForALB
+        - https://sqs.eu-west-1.amazonaws.com/123456789012/MyQueueForALB2
+      # Input: This must be either log or stdin
+      log_type: alb
+      # Optional fields extracter from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
+      key_regex_fields: ^(?<environment>[^\-]+)-(?<application>[^/]+)/(?<awsregion>[^/]+)
+      poll_frequency: 5m
+    -
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForCloudFront
+      log_type: cloudfront
+      poll_frequency: 1m
+      # Optional additional fields
+      fields:
+        environment: staging
+    -
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForCloudTrail
+      log_type: cloudtrail
+      poll_frequency: 15m
 
 #================================ General =====================================
 
@@ -91,10 +114,25 @@ output.elasticsearch:
 #================================ Logging =====================================
 
 # Sets log level. The default log level is info.
-# Available log levels are: critical, error, warning, info, debug
+# Available log levels are: error, warning, info, debug
 #logging.level: debug
 
 # At debug level, you can selectively enable logging only for some components.
 # To enable all selectors use ["*"]. Examples of other selectors are "beat",
 # "publish", "service".
 #logging.selectors: ["*"]
+
+#============================== Xpack Monitoring ===============================
+# s3logsbeat can export internal metrics to a central Elasticsearch monitoring
+# cluster.  This requires xpack monitoring to be enabled in Elasticsearch.  The
+# reporting is disabled by default.
+
+# Set to true to enable the monitoring reporter.
+#xpack.monitoring.enabled: false
+
+# Uncomment to send the metrics to Elasticsearch. Most settings from the
+# Elasticsearch output are accepted here as well. Any setting that is not set is
+# automatically inherited from the Elasticsearch output configuration, so if you
+# have the Elasticsearch output configured, you can simply uncomment the
+# following line.
+#xpack.monitoring.elasticsearch:

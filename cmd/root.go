@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"flag"
+
+	"github.com/spf13/pflag"
+
 	"github.com/mpucholblasco/s3logsbeat/beater"
 
 	cmd "github.com/elastic/beats/libbeat/cmd"
@@ -10,4 +14,11 @@ import (
 var Name = "s3logsbeat"
 
 // RootCmd to handle beats cli
-var RootCmd = cmd.GenRootCmd(Name, "", beater.New)
+var RootCmd *cmd.BeatsRootCmd
+
+func init() {
+	var runFlags = pflag.NewFlagSet(Name, pflag.ExitOnError)
+	runFlags.AddGoFlag(flag.CommandLine.Lookup("once"))
+
+	RootCmd = cmd.GenRootCmdWithRunFlags(Name, "", beater.New, runFlags)
+}

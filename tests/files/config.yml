@@ -1,0 +1,35 @@
+s3logsbeat:
+  # SQS prospectors
+  inputs:
+    -
+      type: sqs
+      # SQS information
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForALB
+        - https://sqs.eu-west-1.amazonaws.com/123456789012/MyQueueForALB2
+      # Input: This must be either log or stdin
+      log_format: alb
+      # Optional fields extracter from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
+      key_regex_fields: ^(?P<environment>[^\-]+)-(?P<application>[^/]+)/(?P<awsregion>[^/]+)
+      poll_frequency: 5m
+    -
+      type: sqs
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForCloudFront
+      log_format: cloudfront
+      poll_frequency: 1m
+      # Optional additional fields
+      fields:
+        environment: staging
+    -
+      type: sqs
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForCloudTrail
+      log_format: cloudtrail
+      poll_frequency: 15m
+
+# Additional stuff we should be ignore
+output:
+  elasticsearch:
+    enabled: true
+    hosts: ["127.0.0.1:9200"]

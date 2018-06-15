@@ -1,0 +1,7 @@
+s3logsbeat:
+  # No prospectors
+  inputs: []
+output:
+  elasticsearch:
+    enabled: true
+    hosts: ["127.0.0.1:9200"]
