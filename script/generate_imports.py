@@ -20,6 +20,7 @@ import (
 )
 """
 
+
 def get_importable_lines(go_beat_path, import_line):
     path = abspath("input")
 

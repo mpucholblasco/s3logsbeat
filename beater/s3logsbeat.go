@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/crawler"
+
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/crawler"
 
 	"github.com/mpucholblasco/s3logsbeat/config"
 )
@@ -47,11 +49,14 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
+	chanSQS := make(chan *aws.SQS, 100)
+
 	crawler, err := crawler.New(
 		bt.config.Inputs,
 		b.Info.Version,
 		bt.done,
-		*once)
+		*once,
+		chanSQS)
 	if err != nil {
 		logp.Err("Could not init crawler: %v", err)
 		return err

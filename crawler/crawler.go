@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/input"
+
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/input"
 
 	_ "github.com/mpucholblasco/s3logsbeat/include"
 )
@@ -20,9 +22,10 @@ type Crawler struct {
 	once        bool
 	beatVersion string
 	beatDone    chan struct{}
+	chanSQS     chan *aws.SQS
 }
 
-func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool) (*Crawler, error) {
+func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, chanSQS chan *aws.SQS) (*Crawler, error) {
 	return &Crawler{
 		//out:          out,
 		inputs:       map[uint64]*input.Runner{},
@@ -30,6 +33,7 @@ func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct
 		once:         once,
 		beatVersion:  beatVersion,
 		beatDone:     beatDone,
+		chanSQS:      chanSQS,
 	}, nil
 }
 
@@ -70,7 +74,7 @@ func (c *Crawler) startInput(
 	}
 
 	//connector := channel.ConnectTo(pipeline, c.out)
-	p, err := input.New(config, c.beatDone)
+	p, err := input.New(config, c.beatDone, c.chanSQS)
 	if err != nil {
 		return fmt.Errorf("Error in initing input: %s", err)
 	}

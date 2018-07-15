@@ -7,6 +7,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/mpucholblasco/s3logsbeat/aws"
 
 	"github.com/mitchellh/hashstructure"
 )
@@ -27,12 +28,14 @@ type Runner struct {
 	ID       uint64
 	Once     bool
 	beatDone chan struct{}
+	chanSQS  chan *aws.SQS
 }
 
 // New instantiates a new Runner
 func New(
 	conf *common.Config,
 	beatDone chan struct{},
+	chanSQS chan *aws.SQS,
 ) (*Runner, error) {
 	input := &Runner{
 		config:   defaultConfig,
@@ -40,6 +43,7 @@ func New(
 		done:     make(chan struct{}),
 		Once:     false,
 		beatDone: beatDone,
+		chanSQS:  chanSQS,
 	}
 
 	var err error
@@ -63,6 +67,7 @@ func New(
 	context := Context{
 		Done:     input.done,
 		BeatDone: input.beatDone,
+		ChanSQS:  input.chanSQS,
 	}
 	var ipt Input
 	ipt, err = f(conf, context)
@@ -107,6 +112,8 @@ func (p *Runner) Run() {
 	if p.Once {
 		return
 	}
+
+	logp.Debug("input", "Running input with ID=%d each %s", p.ID, p.config.PollFrequency.String())
 
 	for {
 		select {

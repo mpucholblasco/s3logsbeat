@@ -5,11 +5,13 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/mpucholblasco/s3logsbeat/aws"
 )
 
 type Context struct {
 	Done     chan struct{}
 	BeatDone chan struct{}
+	ChanSQS  chan *aws.SQS
 }
 
 // Factory is used to register functions creating new Input instances.

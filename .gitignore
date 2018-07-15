@@ -5,3 +5,4 @@
 /s3logsbeat
 /s3logsbeat.test
 *.pyc
+config.yml

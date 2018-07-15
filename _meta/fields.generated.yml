@@ -1,9 +1,0 @@
-- key: s3logsbeat
-  title: s3logsbeat
-  description:
-  fields:
-    - name: counter
-      type: long
-      required: true
-      description: >
-        PLEASE UPDATE DOCUMENTATION

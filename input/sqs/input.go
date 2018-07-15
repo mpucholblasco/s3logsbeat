@@ -1,9 +1,11 @@
 package log
 
 import (
+	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/input"
+
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/input"
 )
 
 func init() {
@@ -15,9 +17,10 @@ func init() {
 
 // Input contains the input and its config
 type Input struct {
-	cfg    *common.Config
-	config config
-	done   chan struct{}
+	cfg     *common.Config
+	config  config
+	done    chan struct{}
+	chanSQS chan *aws.SQS
 }
 
 // NewInput instantiates a new Log
@@ -26,9 +29,10 @@ func NewInput(
 	context input.Context,
 ) (input.Input, error) {
 	p := &Input{
-		config: defaultConfig,
-		cfg:    cfg,
-		done:   context.Done,
+		config:  defaultConfig,
+		cfg:     cfg,
+		done:    context.Done,
+		chanSQS: context.ChanSQS,
 	}
 
 	if err := cfg.Unpack(&p.config); err != nil {
@@ -40,7 +44,21 @@ func NewInput(
 
 // Run runs the input
 func (p *Input) Run() {
-	logp.Debug("input", "Start next scan")
+	logp.Debug("input-sqs", "Start next scan")
+	awsSession := aws.NewSession()
+	for _, queue := range p.config.QueuesURL {
+		sqs := aws.NewSQS(awsSession, &queue)
+		//p.chanSQS <- sqs
+		_, err := sqs.ReceiveMessages(func(message *aws.SQSMessage) error {
+			logp.Debug("input-sqs", "Message: %v", message)
+			// Generate object to read from S3 and pass to output
+			return nil
+		})
+		if err != nil {
+			logp.Err("Could not receive SQS messages: %v", err)
+		}
+
+	}
 }
 
 // Wait waits for the all harvesters to complete and only then call stop
