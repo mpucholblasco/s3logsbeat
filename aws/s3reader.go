@@ -1,8 +1,7 @@
 package aws
 
 import (
-	"bytes"
-	"io/ioutil"
+	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -38,22 +37,10 @@ func News3(session *session.Session, queueURL *string) *S3 {
 //   MD5OfBody: "1212f7afeed9f2bff8e8ee2b4f81020a"
 // MessageId: "b872e5af-be32-4a67-82d5-87f062937c8a"
 // ReceiptHandle: "base64encodedstring"
-func (s *S3) GetReader(bucket string, key string) (*bytes.Reader, error) {
+func (s *S3) GetReader(bucket string, key string) (io.Reader, error) {
 	output, err := s.client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: maybe not needed -> see https://medium.com/learning-the-go-programming-language/streaming-io-in-go-d93507931185
-	// Convert S3 to a buffer
-	buff, err := ioutil.ReadAll(output.Body)
-	if err != nil {
-		return nil, err
-	}
-	// Converts to a read seeker
-	reader := bytes.NewReader(buff)
-	return reader, nil
+	return output.Body, err
 }

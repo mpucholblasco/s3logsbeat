@@ -1,10 +1,15 @@
 package aws
 
-type s3LogParserMessageHandler func(*struct{})
+import (
+	"io"
+
+	"github.com/elastic/beats/libbeat/common"
+)
+
+type s3LogParserMessageHandler func(common.MapStr)
+type s3LogParserErrorHandler func(line string)
 
 // S3LogParser interface to inherit on each type of S3 log parsers
 type S3LogParser interface {
-	parse(*string, s3LogParserMessageHandler)
+	parse(io.Reader, s3LogParserMessageHandler, s3LogParserErrorHandler)
 }
-
-// TODO: decide if it should be a string or can be s streaming
