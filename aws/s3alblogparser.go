@@ -150,6 +150,6 @@ func parseStringToKind(kind string, value string) (interface{}, error) {
 	case "string":
 		return value, nil
 	default:
-		return nil, fmt.Errorf("Can not convert to unsupported kind (%s)", kind)
+		return nil, fmt.Errorf("Couldn't convert to unsupported kind (%s)", kind)
 	}
 }
