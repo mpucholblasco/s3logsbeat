@@ -17,7 +17,7 @@ var (
 
 // NewSession creates an AWS session. Credentials loaded from SDK default credential chain:
 // 1. Environment
-// 2. Shared crednetials (~/.aws/credentials)
+// 2. Shared credentials (~/.aws/credentials)
 // 3. EC2 instance role
 func NewSession() *session.Session {
 	once.Do(func() {
@@ -32,5 +32,4 @@ func NewSession() *session.Session {
 		}
 	})
 	return sess
-
 }

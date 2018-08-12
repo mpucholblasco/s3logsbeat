@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/config"
 	"github.com/mpucholblasco/s3logsbeat/crawler"
+	"github.com/mpucholblasco/s3logsbeat/worker"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-
-	"github.com/mpucholblasco/s3logsbeat/config"
 )
 
 var (
@@ -68,6 +68,15 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
+	chanS3 := make(chan *aws.S3ObjectSQSMessage, 100)
+
+	sqsConsumerWorker, err := worker.NewSQSConsumerWorker(chanSQS, chanS3)
+	if err != nil {
+		logp.Err("Could not init SQS consumer worker: %v", err)
+		return err
+	}
+	sqsConsumerWorker.Start()
+
 	// If run once, add crawler completion check as alternative to done signal
 	if *once {
 		runOnce := func() {
@@ -83,6 +92,8 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitFinished.Wait()
 
 	crawler.Stop()
+	close(chanSQS)
+	sqsConsumerWorker.Stop()
 
 	//timeout := fb.config.ShutdownTimeout
 	// Checks if on shutdown it should wait for all events to be published

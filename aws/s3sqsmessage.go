@@ -2,6 +2,9 @@ package aws
 
 import (
 	"encoding/json"
+	"net/url"
+
+	"github.com/elastic/beats/libbeat/logp"
 )
 
 // S3SQSMessage interface to extract new S3 objects from SQS messages
@@ -13,9 +16,9 @@ type S3SQSMessage interface {
 // null implies that this object is extracted from an SQS message)
 type S3ObjectSQSMessage struct {
 	sqsMessage *SQSMessage
-	region     *string
-	s3Bucket   *string
-	s3Key      *string
+	region     string
+	s3Bucket   string
+	s3Key      string
 }
 
 type s3messageHandler func(*S3ObjectSQSMessage)
@@ -45,12 +48,16 @@ func (sm *SQSMessage) ExtractNewS3Objects(mh s3messageHandler) error {
 	}
 	for _, e := range s3e.Records {
 		if e.EventSource == "aws:s3" && e.EventName == "ObjectCreated:Put" {
-			mh(&S3ObjectSQSMessage{
-				sqsMessage: sm,
-				region:     &e.AwsRegion,
-				s3Bucket:   &e.S3.Bucket.Name,
-				s3Key:      &e.S3.Object.Key,
-			})
+			if s3key, err := url.QueryUnescape(e.S3.Object.Key); err != nil {
+				logp.Warn("Could not unescape S3 object: %s", e.S3.Object.Key)
+			} else {
+				mh(&S3ObjectSQSMessage{
+					sqsMessage: sm,
+					region:     e.AwsRegion,
+					s3Bucket:   e.S3.Bucket.Name,
+					s3Key:      s3key,
+				})
+			}
 		}
 	}
 	return nil

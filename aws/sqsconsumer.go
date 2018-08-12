@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -78,4 +80,8 @@ func (s *SQS) DeleteMessage(receiptHandle *string) error {
 	}
 
 	return err
+}
+
+func (s *SQS) String() string {
+	return fmt.Sprintf("%s", *s.url)
 }

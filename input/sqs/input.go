@@ -48,16 +48,7 @@ func (p *Input) Run() {
 	awsSession := aws.NewSession()
 	for _, queue := range p.config.QueuesURL {
 		sqs := aws.NewSQS(awsSession, &queue)
-		//p.chanSQS <- sqs
-		_, err := sqs.ReceiveMessages(func(message *aws.SQSMessage) error {
-			logp.Debug("input-sqs", "Message: %v", message)
-			// Generate object to read from S3 and pass to output
-			return nil
-		})
-		if err != nil {
-			logp.Err("Could not receive SQS messages: %v", err)
-		}
-
+		p.chanSQS <- sqs
 	}
 }
 

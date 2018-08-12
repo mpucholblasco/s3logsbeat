@@ -7,9 +7,9 @@ import (
 )
 
 type s3LogParserMessageHandler func(common.MapStr)
-type s3LogParserErrorHandler func(line string)
+type s3LogParserErrorHandler func(string, error)
 
 // S3LogParser interface to inherit on each type of S3 log parsers
 type S3LogParser interface {
-	parse(io.Reader, s3LogParserMessageHandler, s3LogParserErrorHandler)
+	Parse(io.Reader, s3LogParserMessageHandler, s3LogParserErrorHandler)
 }
