@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ const (
 	Float32
 	Float64
 	String
+	UrlEncoded
 
 	TimeISO8601
 	TimeLayout // based on https://golang.org/pkg/time/#Parse
@@ -101,6 +103,10 @@ var (
 		KindElement{
 			kind: String,
 			name: "string",
+		},
+		KindElement{
+			kind: UrlEncoded,
+			name: "urlencoded",
 		},
 		KindElement{
 			kind: TimeISO8601,
@@ -221,15 +227,25 @@ func isLineIgnored(line *string, reIgnore *regexp.Regexp) bool {
 	return false
 }
 
+func MustKindMapStringToType(o map[string]string) map[string]KindElement {
+	r, err := KindMapStringToType(o)
+	if err != nil {
+		panic(`logparser: KindMapStringToType error: ` + err.Error())
+	}
+	return r
+}
+
 func KindMapStringToType(o map[string]string) (map[string]KindElement, error) {
 	r := make(map[string]KindElement)
 	for k, v := range o {
 		if kind, ok := kindStringMap[v]; ok {
 			r[k] = kind
 		} else if strings.HasPrefix(v, "time:") {
+			timeLayout := strings.TrimPrefix(v, "time:")
 			r[k] = KindElement{
 				kind:      TimeLayout,
-				kindExtra: strings.TrimPrefix(v, "time:"),
+				kindExtra: timeLayout,
+				name:      fmt.Sprintf("time layout (%s)", timeLayout),
 			}
 		} else {
 			return nil, fmt.Errorf("Unsupported kind (%s)", k)
@@ -238,12 +254,12 @@ func KindMapStringToType(o map[string]string) (map[string]KindElement, error) {
 	return r, nil
 }
 
-func KindMapKindToType(o map[string]Kind) (map[string]KindElement, error) {
+func KindMapKindToType(o map[string]Kind) map[string]KindElement {
 	r := make(map[string]KindElement)
 	for k, v := range o {
 		r[k], _ = kindMap[v]
 	}
-	return r, nil
+	return r
 }
 
 func parseStringToKind(e KindElement, value string) (interface{}, error) {
@@ -314,6 +330,8 @@ func parseStringToKind(e KindElement, value string) (interface{}, error) {
 		}
 	case Float64:
 		return strconv.ParseFloat(value, 64)
+	case UrlEncoded:
+		return url.QueryUnescape(value)
 	}
 	return value, nil
 }
