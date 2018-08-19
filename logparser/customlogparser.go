@@ -6,6 +6,7 @@ import (
 	"io"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
@@ -30,6 +31,7 @@ const (
 	String
 
 	TimeISO8601
+	TimeLayout // based on https://golang.org/pkg/time/#Parse
 
 	// aliases
 	Byte = Uint8
@@ -37,8 +39,9 @@ const (
 )
 
 type KindElement struct {
-	kind Kind
-	name string
+	kind      Kind
+	kindExtra interface{}
+	name      string
 }
 
 var (
@@ -135,22 +138,38 @@ var (
 // null implies that this object is extracted from an SQS message)
 type CustomLogParser struct {
 	re        *regexp.Regexp
+	reIgnore  *regexp.Regexp
 	reNames   []string
 	reKindMap map[string]KindElement
 }
 
-func NewCustomLogParser(re *regexp.Regexp, reKindMap map[string]KindElement) *CustomLogParser {
+// NewCustomLogParser creates a new custom log parser based on regular expression
+// to detect fields in a log line (re)
+func NewCustomLogParser(re *regexp.Regexp) *CustomLogParser {
 	return &CustomLogParser{
-		re:        re,
-		reNames:   re.SubexpNames(),
-		reKindMap: reKindMap,
+		re:      re,
+		reNames: re.SubexpNames(),
 	}
+}
+
+func (c *CustomLogParser) WithKindMap(reKindMap map[string]KindElement) *CustomLogParser {
+	c.reKindMap = reKindMap
+	return c
+}
+
+func (c *CustomLogParser) WithReIgnore(reIgnore *regexp.Regexp) *CustomLogParser {
+	c.reIgnore = reIgnore
+	return c
 }
 
 // Parse parses a reader and sends errors and parsed elements to handlers
 func (c *CustomLogParser) Parse(reader io.Reader, mh logParserMessageHandler, eh logParserErrorHandler) error {
 	r := bufio.NewReader(reader)
 	re := c.re.Copy()
+	var reIgnore *regexp.Regexp
+	if c.reIgnore != nil {
+		reIgnore = c.reIgnore.Copy()
+	}
 LINE_READER:
 	for {
 		line, err := r.ReadString('\n')
@@ -158,7 +177,7 @@ LINE_READER:
 			return err
 		}
 
-		if line != "" && line != "\n" {
+		if !isLineIgnored(&line, reIgnore) {
 			match := re.FindStringSubmatch(line)
 			if match == nil {
 				eh(line, fmt.Errorf("Line does not match expected format"))
@@ -171,7 +190,7 @@ LINE_READER:
 					}
 
 					if k, ok := c.reKindMap[name]; ok {
-						if v, err := parseStringToKind(k.kind, match[i]); err != nil {
+						if v, err := parseStringToKind(k, match[i]); err != nil {
 							eh(line, fmt.Errorf("Couldn't parse field (%s) to type (%s). Error: %+v", name, k.name, err))
 							continue LINE_READER
 						} else {
@@ -192,11 +211,26 @@ LINE_READER:
 	return nil
 }
 
+func isLineIgnored(line *string, reIgnore *regexp.Regexp) bool {
+	if *line == "" || *line == "\n" {
+		return true
+	}
+	if reIgnore != nil {
+		return reIgnore.MatchString(*line)
+	}
+	return false
+}
+
 func KindMapStringToType(o map[string]string) (map[string]KindElement, error) {
 	r := make(map[string]KindElement)
 	for k, v := range o {
 		if kind, ok := kindStringMap[v]; ok {
 			r[k] = kind
+		} else if strings.HasPrefix(v, "time:") {
+			r[k] = KindElement{
+				kind:      TimeLayout,
+				kindExtra: strings.TrimPrefix(v, "time:"),
+			}
 		} else {
 			return nil, fmt.Errorf("Unsupported kind (%s)", k)
 		}
@@ -212,8 +246,10 @@ func KindMapKindToType(o map[string]Kind) (map[string]KindElement, error) {
 	return r, nil
 }
 
-func parseStringToKind(kind Kind, value string) (interface{}, error) {
-	switch kind {
+func parseStringToKind(e KindElement, value string) (interface{}, error) {
+	switch e.kind {
+	case TimeLayout:
+		return time.Parse(e.kindExtra.(string), value)
 	case TimeISO8601:
 		return time.Parse(time.RFC3339Nano, value)
 	case Bool:
@@ -278,8 +314,6 @@ func parseStringToKind(kind Kind, value string) (interface{}, error) {
 		}
 	case Float64:
 		return strconv.ParseFloat(value, 64)
-	case String:
-		return value, nil
 	}
-	return nil, fmt.Errorf("Unreachable switch")
+	return value, nil
 }
