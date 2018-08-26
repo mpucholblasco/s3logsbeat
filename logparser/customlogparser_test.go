@@ -17,15 +17,15 @@ import (
 
 var (
 	regexTest = regexp.MustCompile(`^(?P<string>[^ ]*) (?P<time>[^ ]*) (?P<int>[-0-9]*) (?P<int8>[-0-9]*) (?P<int16>[-0-9]*) (?P<bool>[^ ]*) (?P<string2>[^ ]*) (?P<float32>[-.0-9]*) (?P<float64>[-.0-9]*)`)
-	regexKind = map[string]Kind{
-		"time":    TimeISO8601,
-		"int":     Int,
-		"int8":    Int8,
-		"int16":   Int16,
-		"bool":    Bool,
-		"string2": String,
-		"float32": Float32,
-		"float64": Float64,
+	regexKind = map[string]string{
+		"time":    "timeISO8601",
+		"int":     "int",
+		"int8":    "int8",
+		"int16":   "int16",
+		"bool":    "bool",
+		"string2": "string",
+		"float32": "float32",
+		"float64": "float64",
 	}
 )
 
@@ -56,24 +56,24 @@ func TestCustomLogParserKindMapStringToTypeCorrect(t *testing.T) {
 		"float64":    "float64",
 		"urlencoded": "urlencoded",
 	}
-	expected := map[string]KindElement{
-		"timeLayout": KindElement{kind: TimeLayout, kindExtra: "2006-01-02\t15:04:05", name: "time layout (2006-01-02\t15:04:05)"},
-		"time":       kindMap[TimeISO8601],
-		"int":        kindMap[Int],
-		"int8":       kindMap[Int8],
-		"int16":      kindMap[Int16],
-		"bool":       kindMap[Bool],
-		"string2":    kindMap[String],
-		"float32":    kindMap[Float32],
-		"float64":    kindMap[Float64],
-		"urlencoded": kindMap[UrlEncoded],
+	expected := map[string]kindElement{
+		"timeLayout": kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02\t15:04:05", name: "time layout (2006-01-02\t15:04:05)"},
+		"time":       kindMap[kindTimeISO8601],
+		"int":        kindMap[kindInt],
+		"int8":       kindMap[kindInt8],
+		"int16":      kindMap[kindInt16],
+		"bool":       kindMap[kindBool],
+		"string2":    kindMap[kindString],
+		"float32":    kindMap[kindFloat32],
+		"float64":    kindMap[kindFloat64],
+		"urlencoded": kindMap[kindURLEncoded],
 	}
 
-	value, err := KindMapStringToType(m)
+	value, err := kindMapStringToType(m)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, value)
 	assert.NotPanics(t, func() {
-		MustKindMapStringToType(m)
+		mustKindMapStringToType(m)
 	})
 }
 
@@ -89,136 +89,104 @@ func TestCustomLogParserKindMapStringToTypeUnsupportedType(t *testing.T) {
 		"float64": "float64",
 	}
 
-	value, err := KindMapStringToType(m)
+	value, err := kindMapStringToType(m)
 	assert.Nil(t, value)
 	assert.Error(t, err)
 	assert.Panics(t, func() {
-		MustKindMapStringToType(m)
+		mustKindMapStringToType(m)
 	})
-}
-
-// KindMapKindToType & MustKindMapKindToType tests
-func TestCustomLogParserKindMapKindToTypeCorrect(t *testing.T) {
-	m := map[string]Kind{
-		"time":       TimeISO8601,
-		"int":        Int,
-		"int8":       Int8,
-		"int16":      Int16,
-		"bool":       Bool,
-		"string2":    String,
-		"float32":    Float32,
-		"float64":    Float64,
-		"urlencoded": UrlEncoded,
-	}
-
-	expected := map[string]string{
-		"time":       "timeISO8601",
-		"int":        "int",
-		"int8":       "int8",
-		"int16":      "int16",
-		"bool":       "bool",
-		"string2":    "string",
-		"float32":    "float32",
-		"float64":    "float64",
-		"urlencoded": "urlencoded",
-	}
-
-	value := KindMapKindToType(m)
-	for idx, e := range value {
-		assert.Equal(t, expected[idx], e.name)
-	}
 }
 
 // parseStringToKind tests
 func TestCustomLogParserParseStringToKindsWithNoErrors(t *testing.T) {
 	type elem struct {
-		kind     KindElement
+		kind     kindElement
 		strValue string
 		value    interface{}
 	}
 	elems := []elem{
 		elem{
-			kind:     KindElement{kind: TimeLayout, kindExtra: "2006-01-02\t15:04:05"},
+			kind:     kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02\t15:04:05"},
 			strValue: "2014-05-23\t01:15:18",
 			value:    time.Date(2014, 5, 23, 1, 15, 18, 0, time.UTC),
 		},
 		elem{
-			kind:     kindMap[TimeISO8601],
+			kind:     kindMap[kindTimeISO8601],
 			strValue: "2016-08-10T22:08:42.945958Z",
 			value:    time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 		},
 		elem{
-			kind:     kindMap[Bool],
+			kind:     kindMap[kindBool],
 			strValue: "true",
 			value:    true,
 		},
 		elem{
-			kind:     kindMap[Int8],
+			kind:     kindMap[kindInt8],
 			strValue: "5",
 			value:    int8(5),
 		},
 		elem{
-			kind:     kindMap[Int16],
+			kind:     kindMap[kindInt16],
 			strValue: "32000",
 			value:    int16(32000),
 		},
 		elem{
-			kind:     kindMap[Int],
+			kind:     kindMap[kindInt],
 			strValue: "67353",
 			value:    int(67353),
 		},
 		elem{
-			kind:     kindMap[Int32],
+			kind:     kindMap[kindInt32],
 			strValue: "67353",
 			value:    int32(67353),
 		},
 		elem{
-			kind:     kindMap[Int64],
+			kind:     kindMap[kindInt64],
 			strValue: "-35868395685",
 			value:    int64(-35868395685),
 		},
 		elem{
-			kind:     kindMap[Uint8],
+			kind:     kindMap[kindUint8],
 			strValue: "250",
 			value:    uint8(250),
 		},
 		elem{
-			kind:     kindMap[Uint16],
+			kind:     kindMap[kindUint16],
 			strValue: "32000",
 			value:    uint16(32000),
 		},
 		elem{
-			kind:     kindMap[Uint],
+			kind:     kindMap[kindUint],
 			strValue: "835000",
 			value:    uint(835000),
 		},
 		elem{
-			kind:     kindMap[Uint32],
+			kind:     kindMap[kindUint32],
 			strValue: "835000",
 			value:    uint32(835000),
 		},
 		elem{
-			kind:     kindMap[Uint64],
+			kind:     kindMap[kindUint64],
 			strValue: "35868395685",
 			value:    uint64(35868395685),
 		},
 		elem{
-			kind:     kindMap[Float32],
+			kind:     kindMap[kindFloat32],
 			strValue: "0.385694",
 			value:    float32(0.385694),
 		},
 		elem{
-			kind:     kindMap[Float64],
+			kind:     kindMap[kindFloat64],
 			strValue: "0.38569355355334",
 			value:    0.38569355355334,
 		},
 		elem{
-			kind:     kindMap[String],
+			kind:     kindMap[kindString],
 			strValue: "This is a string",
 			value:    "This is a string",
 		},
 		elem{
-			kind:     kindMap[UrlEncoded],
+			kind:     kindMap[kindURLEncoded],
 			strValue: "Mozilla/4.0%20(compatible;%20MSIE%207.0;%20Windows%20NT%205.1)",
 			value:    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)",
 		},
@@ -233,72 +201,72 @@ func TestCustomLogParserParseStringToKindsWithNoErrors(t *testing.T) {
 
 func TestCustomLogParserParseStringToKindsWithParseErrors(t *testing.T) {
 	type elem struct {
-		kind     KindElement
+		kind     kindElement
 		strValue string
 	}
 	elems := []elem{
 		elem{
-			kind:     KindElement{kind: TimeLayout, kindExtra: "2006-01-02 15:04:05"},
+			kind:     kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02 15:04:05"},
 			strValue: "3 Feb 2014 01:14:18",
 		},
 		elem{
-			kind:     kindMap[TimeISO8601],
+			kind:     kindMap[kindTimeISO8601],
 			strValue: "true",
 		},
 		elem{
-			kind:     kindMap[Bool],
+			kind:     kindMap[kindBool],
 			strValue: "3",
 		},
 		elem{
-			kind:     kindMap[Int8],
+			kind:     kindMap[kindInt8],
 			strValue: "53535",
 		},
 		elem{
-			kind:     kindMap[Int16],
+			kind:     kindMap[kindInt16],
 			strValue: "jo",
 		},
 		elem{
-			kind:     kindMap[Int],
+			kind:     kindMap[kindInt],
 			strValue: "true",
 		},
 		elem{
-			kind:     kindMap[Int32],
+			kind:     kindMap[kindInt32],
 			strValue: "false",
 		},
 		elem{
-			kind:     kindMap[Int64],
+			kind:     kindMap[kindInt64],
 			strValue: "none",
 		},
 		elem{
-			kind:     kindMap[Uint8],
+			kind:     kindMap[kindUint8],
 			strValue: "-35",
 		},
 		elem{
-			kind:     kindMap[Uint16],
+			kind:     kindMap[kindUint16],
 			strValue: "-5",
 		},
 		elem{
-			kind:     kindMap[Uint],
+			kind:     kindMap[kindUint],
 			strValue: "false",
 		},
 		elem{
-			kind:     kindMap[Uint32],
+			kind:     kindMap[kindUint32],
 			strValue: "true",
 		},
 		elem{
-			kind:     kindMap[Uint64],
+			kind:     kindMap[kindUint64],
 			strValue: "-3235",
 		},
 		elem{
-			kind:     kindMap[Float32],
+			kind:     kindMap[kindFloat32],
 			strValue: "false",
 		},
 		elem{
-			kind:     kindMap[Float64],
+			kind:     kindMap[kindFloat64],
 			strValue: "true",
 		},
 		elem{
-			kind:     kindMap[UrlEncoded],
+			kind:     kindMap[kindURLEncoded],
 			strValue: "a%5Z",
 		},
 	}
@@ -347,8 +315,7 @@ func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 		},
 	}
 
-	k := KindMapKindToType(regexKind)
-	parser := NewCustomLogParser(regexTest).WithKindMap(k)
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
 	expectedErrorsPrefix := []string{}
 	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
@@ -394,8 +361,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 		},
 	}
 
-	k := KindMapKindToType(regexKind)
-	parser := NewCustomLogParser(regexTest).WithKindMap(k)
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
 	expectedErrorsPrefix := []string{}
 	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
@@ -448,8 +414,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 		},
 	}
 
-	k := KindMapKindToType(regexKind)
-	parser := NewCustomLogParser(regexTest).WithKindMap(k).WithReIgnore(regexp.MustCompile(`^\s*#`))
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind).WithReIgnore(regexp.MustCompile(`^\s*#`))
 	expectedErrorsPrefix := []string{}
 	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
@@ -461,8 +426,7 @@ func TestCustomLogParserParseErrorLines(t *testing.T) {
 		`Couldn't parse field (time) to type (timeISO8601). Error: parsing time "not-a-valid-date"`,
 	}
 
-	k := KindMapKindToType(regexKind)
-	parser := NewCustomLogParser(regexTest).WithKindMap(k)
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
 	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
@@ -489,16 +453,14 @@ Incorrect line2
 		"Line does not match expected format",
 	}
 
-	k := KindMapKindToType(regexKind)
-	parser := NewCustomLogParser(regexTest).WithKindMap(k)
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
 	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserNothingProcessedOnReaderError(t *testing.T) {
 	ok := 0
 	ko := 0
-	k := KindMapKindToType(regexKind)
-	parser := NewCustomLogParser(regexTest).WithKindMap(k)
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
 	err := parser.Parse(&testReader{}, func(s common.MapStr) {
 		ok++
 	}, func(errLine string, err error) {

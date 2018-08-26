@@ -13,126 +13,126 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 )
 
-type Kind int
+type kind int
 
 const (
-	Bool Kind = iota
-	Int
-	Int8
-	Int16
-	Int32
-	Int64
-	Uint
-	Uint8
-	Uint16
-	Uint32
-	Uint64
-	Float32
-	Float64
-	String
-	UrlEncoded
+	kindBool kind = iota
+	kindInt
+	kindInt8
+	kindInt16
+	kindInt32
+	kindInt64
+	kindUint
+	kindUint8
+	kindUint16
+	kindUint32
+	kindUint64
+	kindFloat32
+	kindFloat64
+	kindString
+	kindURLEncoded
 
-	TimeISO8601
-	TimeLayout // based on https://golang.org/pkg/time/#Parse
+	kindTimeISO8601
+	kindTimeLayout // based on https://golang.org/pkg/time/#Parse
 
 	// aliases
-	Byte = Uint8
-	Rune = Int32
+	kindByte = kindUint8
+	kindRune = kindInt32
 )
 
-type KindElement struct {
-	kind      Kind
+type kindElement struct {
+	kind      kind
 	kindExtra interface{}
 	name      string
 }
 
 var (
-	kindElements = []KindElement{
-		KindElement{
-			kind: Bool,
+	kindElements = []kindElement{
+		kindElement{
+			kind: kindBool,
 			name: "bool",
 		},
-		KindElement{
-			kind: Int,
+		kindElement{
+			kind: kindInt,
 			name: "int",
 		},
-		KindElement{
-			kind: Int8,
+		kindElement{
+			kind: kindInt8,
 			name: "int8",
 		},
-		KindElement{
-			kind: Int16,
+		kindElement{
+			kind: kindInt16,
 			name: "int16",
 		},
-		KindElement{
-			kind: Int32,
+		kindElement{
+			kind: kindInt32,
 			name: "int32",
 		},
-		KindElement{
-			kind: Int64,
+		kindElement{
+			kind: kindInt64,
 			name: "int64",
 		},
-		KindElement{
-			kind: Uint,
+		kindElement{
+			kind: kindUint,
 			name: "uint",
 		},
-		KindElement{
-			kind: Uint8,
+		kindElement{
+			kind: kindUint8,
 			name: "uint8",
 		},
-		KindElement{
-			kind: Uint16,
+		kindElement{
+			kind: kindUint16,
 			name: "uint16",
 		},
-		KindElement{
-			kind: Uint32,
+		kindElement{
+			kind: kindUint32,
 			name: "uint32",
 		},
-		KindElement{
-			kind: Uint64,
+		kindElement{
+			kind: kindUint64,
 			name: "uint64",
 		},
-		KindElement{
-			kind: Float32,
+		kindElement{
+			kind: kindFloat32,
 			name: "float32",
 		},
-		KindElement{
-			kind: Float64,
+		kindElement{
+			kind: kindFloat64,
 			name: "float64",
 		},
-		KindElement{
-			kind: String,
+		kindElement{
+			kind: kindString,
 			name: "string",
 		},
-		KindElement{
-			kind: UrlEncoded,
+		kindElement{
+			kind: kindURLEncoded,
 			name: "urlencoded",
 		},
-		KindElement{
-			kind: TimeISO8601,
+		kindElement{
+			kind: kindTimeISO8601,
 			name: "timeISO8601",
 		},
 		// aliases
-		KindElement{
-			kind: Byte,
+		kindElement{
+			kind: kindByte,
 			name: "byte",
 		},
-		KindElement{
-			kind: Rune,
+		kindElement{
+			kind: kindRune,
 			name: "rune",
 		},
 	}
 
-	kindStringMap = func() map[string]KindElement {
-		r := make(map[string]KindElement)
+	kindStringMap = func() map[string]kindElement {
+		r := make(map[string]kindElement)
 		for _, e := range kindElements {
 			r[e.name] = e
 		}
 		return r
 	}()
 
-	kindMap = func() map[Kind]KindElement {
-		r := make(map[Kind]KindElement)
+	kindMap = func() map[kind]kindElement {
+		r := make(map[kind]kindElement)
 		for _, e := range kindElements {
 			r[e.kind] = e
 		}
@@ -143,10 +143,11 @@ var (
 // CustomLogParser contains information of S3 objects (sqsMessage not
 // null implies that this object is extracted from an SQS message)
 type CustomLogParser struct {
-	re        *regexp.Regexp
-	reIgnore  *regexp.Regexp
-	reNames   []string
-	reKindMap map[string]KindElement
+	re          *regexp.Regexp
+	reIgnore    *regexp.Regexp
+	reNames     []string
+	reKindMap   map[string]kindElement
+	emptyValues map[string]string
 }
 
 // NewCustomLogParser creates a new custom log parser based on regular expression
@@ -158,13 +159,21 @@ func NewCustomLogParser(re *regexp.Regexp) *CustomLogParser {
 	}
 }
 
-func (c *CustomLogParser) WithKindMap(reKindMap map[string]KindElement) *CustomLogParser {
-	c.reKindMap = reKindMap
+// WithKindMap configures current log parser to map types passed on reKindMap
+func (c *CustomLogParser) WithKindMap(reKindMap map[string]string) *CustomLogParser {
+	c.reKindMap = mustKindMapStringToType(reKindMap)
 	return c
 }
 
+// WithReIgnore configures current log parser to ignore lines that match reIgnore
 func (c *CustomLogParser) WithReIgnore(reIgnore *regexp.Regexp) *CustomLogParser {
 	c.reIgnore = reIgnore
+	return c
+}
+
+// WithEmptyValues configures current log parser to take into account emptyValues
+func (c *CustomLogParser) WithEmptyValues(emptyValues map[string]string) *CustomLogParser {
+	c.emptyValues = emptyValues
 	return c
 }
 
@@ -227,23 +236,25 @@ func isLineIgnored(line *string, reIgnore *regexp.Regexp) bool {
 	return false
 }
 
-func MustKindMapStringToType(o map[string]string) map[string]KindElement {
-	r, err := KindMapStringToType(o)
+func mustKindMapStringToType(o map[string]string) map[string]kindElement {
+	r, err := kindMapStringToType(o)
 	if err != nil {
 		panic(`logparser: KindMapStringToType error: ` + err.Error())
 	}
 	return r
 }
 
-func KindMapStringToType(o map[string]string) (map[string]KindElement, error) {
-	r := make(map[string]KindElement)
+// KindMapStringToType obtains a map[string]kindElement from a
+// map[string]string or an error if kind is not supported
+func kindMapStringToType(o map[string]string) (map[string]kindElement, error) {
+	r := make(map[string]kindElement)
 	for k, v := range o {
 		if kind, ok := kindStringMap[v]; ok {
 			r[k] = kind
 		} else if strings.HasPrefix(v, "time:") {
 			timeLayout := strings.TrimPrefix(v, "time:")
-			r[k] = KindElement{
-				kind:      TimeLayout,
+			r[k] = kindElement{
+				kind:      kindTimeLayout,
 				kindExtra: timeLayout,
 				name:      fmt.Sprintf("time layout (%s)", timeLayout),
 			}
@@ -254,83 +265,75 @@ func KindMapStringToType(o map[string]string) (map[string]KindElement, error) {
 	return r, nil
 }
 
-func KindMapKindToType(o map[string]Kind) map[string]KindElement {
-	r := make(map[string]KindElement)
-	for k, v := range o {
-		r[k], _ = kindMap[v]
-	}
-	return r
-}
-
-func parseStringToKind(e KindElement, value string) (interface{}, error) {
+func parseStringToKind(e kindElement, value string) (interface{}, error) {
 	switch e.kind {
-	case TimeLayout:
+	case kindTimeLayout:
 		return time.Parse(e.kindExtra.(string), value)
-	case TimeISO8601:
+	case kindTimeISO8601:
 		return time.Parse(time.RFC3339Nano, value)
-	case Bool:
+	case kindBool:
 		return strconv.ParseBool(value)
-	case Int8:
-		if v, err := strconv.ParseInt(value, 10, 8); err != nil {
+	case kindInt8:
+		v, err := strconv.ParseInt(value, 10, 8)
+		if err != nil {
 			return nil, err
-		} else {
-			return int8(v), nil
 		}
-	case Int16:
-		if v, err := strconv.ParseInt(value, 10, 16); err != nil {
+		return int8(v), nil
+	case kindInt16:
+		v, err := strconv.ParseInt(value, 10, 16)
+		if err != nil {
 			return nil, err
-		} else {
-			return int16(v), nil
 		}
-	case Int:
-		if v, err := strconv.ParseInt(value, 10, 32); err != nil {
+		return int16(v), nil
+	case kindInt:
+		v, err := strconv.ParseInt(value, 10, 32)
+		if err != nil {
 			return nil, err
-		} else {
-			return int(v), nil
 		}
-	case Int32:
-		if v, err := strconv.ParseInt(value, 10, 32); err != nil {
+		return int(v), nil
+	case kindInt32:
+		v, err := strconv.ParseInt(value, 10, 32)
+		if err != nil {
 			return nil, err
-		} else {
-			return int32(v), nil
 		}
-	case Int64:
+		return int32(v), nil
+	case kindInt64:
 		return strconv.ParseInt(value, 10, 64)
-	case Uint8:
-		if v, err := strconv.ParseUint(value, 10, 8); err != nil {
+	case kindUint8:
+		v, err := strconv.ParseUint(value, 10, 8)
+		if err != nil {
 			return nil, err
-		} else {
-			return uint8(v), nil
 		}
-	case Uint16:
-		if v, err := strconv.ParseUint(value, 10, 16); err != nil {
+		return uint8(v), nil
+	case kindUint16:
+		v, err := strconv.ParseUint(value, 10, 16)
+		if err != nil {
 			return nil, err
-		} else {
-			return uint16(v), nil
 		}
-	case Uint:
-		if v, err := strconv.ParseUint(value, 10, 32); err != nil {
+		return uint16(v), nil
+	case kindUint:
+		v, err := strconv.ParseUint(value, 10, 32)
+		if err != nil {
 			return nil, err
-		} else {
-			return uint(v), nil
 		}
-	case Uint32:
-		if v, err := strconv.ParseUint(value, 10, 32); err != nil {
+		return uint(v), nil
+	case kindUint32:
+		v, err := strconv.ParseUint(value, 10, 32)
+		if err != nil {
 			return nil, err
-		} else {
-			return uint32(v), nil
 		}
-	case Uint64:
+		return uint32(v), nil
+	case kindUint64:
 		return strconv.ParseUint(value, 10, 64)
-	case Float32:
-		if v, err := strconv.ParseFloat(value, 32); err != nil {
+	case kindFloat32:
+		v, err := strconv.ParseFloat(value, 32)
+		if err != nil {
 			return nil, err
-		} else {
-			return float32(v), nil
 		}
-	case Float64:
+		return float32(v), nil
+	case kindFloat64:
 		return strconv.ParseFloat(value, 64)
-	case UrlEncoded:
+	case kindURLEncoded:
 		return url.QueryUnescape(value)
 	}
 	return value, nil
