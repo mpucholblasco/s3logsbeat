@@ -2,7 +2,6 @@ package worker
 
 import (
 	"sync"
-	"time"
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/mpucholblasco/s3logsbeat/aws"
@@ -51,8 +50,6 @@ func (w *SQSConsumerWorker) Start() {
 							return
 						default:
 							messagesReceived, more, err := sqs.ReceiveMessages(func(message *aws.SQSMessage) error {
-								logp.Debug("s3logsbeat", "Message: %v", message)
-								time.Sleep(time.Second)
 								if err := message.ExtractNewS3Objects(
 									func(s3object *aws.S3ObjectSQSMessage) {
 										w.out <- s3object
@@ -69,7 +66,7 @@ func (w *SQSConsumerWorker) Start() {
 							if !more {
 								break
 							}
-							// TODO: add received to monitor
+							// TODO: add messagesReceived to monitor
 							logp.Debug("s3logsbeat", "Received %d messages from SQS queue", messagesReceived)
 						}
 					}
