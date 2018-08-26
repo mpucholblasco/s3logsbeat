@@ -8,19 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-const (
-//maxNumberOfMessages = 10
-)
-
-// SQS handle simple SQS queue functions used by a consumer
+// S3 handle simple S3 methods
 type S3 struct {
 	client *s3.S3
 	url    *string
 }
 
-// NewSQS is a construct function for creating the object
-// with session and url of the queue as arguments
-func News3(session *session.Session, queueURL *string) *S3 {
+// NewS3 is a construct function for creating the object
+// with session
+func NewS3(session *session.Session, queueURL *string) *S3 {
 	client := s3.New(session)
 
 	s3 := &S3{
@@ -30,14 +26,8 @@ func News3(session *session.Session, queueURL *string) *S3 {
 	return s3
 }
 
-// ReceiveMessages receives messages from queue and executes message handler for each message
-// Returns the number of messages received and error (if any)
-// Fields present per message:
-//   Body: "{jsonbody}"
-//   MD5OfBody: "1212f7afeed9f2bff8e8ee2b4f81020a"
-// MessageId: "b872e5af-be32-4a67-82d5-87f062937c8a"
-// ReceiptHandle: "base64encodedstring"
-func (s *S3) GetReader(bucket string, key string) (io.Reader, error) {
+// GetReadCloser returns a io.ReadCloser to be readed (and then closed) by another method.
+func (s *S3) GetReadCloser(bucket string, key string) (io.ReadCloser, error) {
 	output, err := s.client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),

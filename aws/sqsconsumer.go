@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	maxNumberOfMessages = 10
+	sqsMaxNumberOfMessages = 10
 )
 
 // SQS handle simple SQS queue functions used by a consumer
@@ -19,7 +19,7 @@ type SQS struct {
 	url    *string
 }
 
-type messageHandler func(*SQSMessage) error
+type sqsMessageHandler func(*SQSMessage) error
 
 // NewSQS is a construct function for creating the object
 // with session and url of the queue as arguments
@@ -41,13 +41,13 @@ func NewSQS(session *session.Session, queueURL *string) *SQS {
 //   MD5OfBody: "1212f7afeed9f2bff8e8ee2b4f81020a"
 // MessageId: "b872e5af-be32-4a67-82d5-87f062937c8a"
 // ReceiptHandle: "base64encodedstring"
-func (s *SQS) ReceiveMessages(mh messageHandler) (int, error) {
+func (s *SQS) ReceiveMessages(mh sqsMessageHandler) (int, error) {
 	received := 0
 	for {
 		logp.Debug("sqsconsumer", "Waiting for messages")
 		receiveMessageInput := &sqs.ReceiveMessageInput{
 			QueueUrl:            s.url,
-			MaxNumberOfMessages: aws.Int64(maxNumberOfMessages), // 1 to 10 (https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html)
+			MaxNumberOfMessages: aws.Int64(sqsMaxNumberOfMessages), // 1 to 10 (https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html)
 		}
 		resp, err := s.client.ReceiveMessage(receiveMessageInput)
 
@@ -60,7 +60,7 @@ func (s *SQS) ReceiveMessages(mh messageHandler) (int, error) {
 		for i := range resp.Messages {
 			mh(NewSQSMessage(s, resp.Messages[i]))
 		}
-		if len(resp.Messages) < maxNumberOfMessages {
+		if len(resp.Messages) < sqsMaxNumberOfMessages {
 			logp.Debug("sqsconsumer", "Received all messages (%d)", received)
 			return received, nil
 		}
