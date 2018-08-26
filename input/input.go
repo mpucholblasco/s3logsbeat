@@ -113,7 +113,7 @@ func (p *Runner) Run() {
 		return
 	}
 
-	logp.Debug("input", "Running input with ID=%d each %s", p.ID, p.config.PollFrequency.String())
+	logp.Debug("s3logsbeat", "Running input with ID=%d each %s", p.ID, p.config.PollFrequency.String())
 
 	for {
 		select {
@@ -121,7 +121,7 @@ func (p *Runner) Run() {
 			logp.Info("input ticker stopped")
 			return
 		case <-time.After(p.config.PollFrequency):
-			logp.Debug("input", "Run input")
+			logp.Debug("s3logsbeat", "Run input")
 			p.input.Run()
 		}
 	}

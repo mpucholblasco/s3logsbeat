@@ -70,11 +70,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 
 	chanS3 := make(chan *aws.S3ObjectSQSMessage, 100)
 
-	sqsConsumerWorker, err := worker.NewSQSConsumerWorker(chanSQS, chanS3)
-	if err != nil {
-		logp.Err("Could not init SQS consumer worker: %v", err)
-		return err
-	}
+	sqsConsumerWorker := worker.NewSQSConsumerWorker(chanSQS, chanS3)
 	sqsConsumerWorker.Start()
 
 	// If run once, add crawler completion check as alternative to done signal
@@ -92,7 +88,6 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitFinished.Wait()
 
 	crawler.Stop()
-	close(chanSQS)
 	sqsConsumerWorker.Stop()
 
 	//timeout := fb.config.ShutdownTimeout

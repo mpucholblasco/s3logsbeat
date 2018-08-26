@@ -44,7 +44,7 @@ func NewInput(
 
 // Run runs the input
 func (p *Input) Run() {
-	logp.Debug("input-sqs", "Start next scan")
+	logp.Debug("s3logsbeat", "Start next scan")
 	awsSession := aws.NewSession()
 	for _, queue := range p.config.QueuesURL {
 		sqs := aws.NewSQS(awsSession, &queue)

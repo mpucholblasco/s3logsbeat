@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/elastic/beats/libbeat/logp"
 )
 
 const (
@@ -41,30 +40,25 @@ func NewSQS(session *session.Session, queueURL *string) *SQS {
 //   MD5OfBody: "1212f7afeed9f2bff8e8ee2b4f81020a"
 // MessageId: "b872e5af-be32-4a67-82d5-87f062937c8a"
 // ReceiptHandle: "base64encodedstring"
-func (s *SQS) ReceiveMessages(mh sqsMessageHandler) (int, error) {
+// Returns an integer with the number of messages received, a boolean indicating that more possible
+// available messages are present on the queue, and the error (if any)
+func (s *SQS) ReceiveMessages(mh sqsMessageHandler) (int, bool, error) {
 	received := 0
-	for {
-		logp.Debug("sqsconsumer", "Waiting for messages")
-		receiveMessageInput := &sqs.ReceiveMessageInput{
-			QueueUrl:            s.url,
-			MaxNumberOfMessages: aws.Int64(sqsMaxNumberOfMessages), // 1 to 10 (https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html)
-		}
-		resp, err := s.client.ReceiveMessage(receiveMessageInput)
-
-		if err != nil {
-			return 0, err
-		}
-
-		logp.Debug("sqsconsumer", "Received %d messages", len(resp.Messages))
-		received += len(resp.Messages)
-		for i := range resp.Messages {
-			mh(NewSQSMessage(s, resp.Messages[i]))
-		}
-		if len(resp.Messages) < sqsMaxNumberOfMessages {
-			logp.Debug("sqsconsumer", "Received all messages (%d)", received)
-			return received, nil
-		}
+	receiveMessageInput := &sqs.ReceiveMessageInput{
+		QueueUrl:            s.url,
+		MaxNumberOfMessages: aws.Int64(sqsMaxNumberOfMessages), // 1 to 10 (https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html)
 	}
+	resp, err := s.client.ReceiveMessage(receiveMessageInput)
+
+	if err != nil {
+		return 0, false, err
+	}
+
+	received += len(resp.Messages)
+	for i := range resp.Messages {
+		mh(NewSQSMessage(s, resp.Messages[i]))
+	}
+	return received, len(resp.Messages) == sqsMaxNumberOfMessages, nil
 }
 
 // DeleteMessage deletes a message from queue
