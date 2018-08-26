@@ -3,13 +3,11 @@
 package aws
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/mpucholblasco/s3logsbeat/testutil"
-	"github.com/stretchr/testify/assert"
+	"github.com/mpucholblasco/s3logsbeat/logparser"
 )
 
 // Examples present here have been obtained from: https://docs.aws.amazon.com/es_es/elasticloadbalancing/latest/application/load-balancer-access-logs.html
@@ -135,23 +133,5 @@ wss 2016-08-10T00:42:46.423695Z app/my-loadbalancer/50dc6c495c0c9188 10.0.0.140:
 			"trace_id":                 "Root=1-58337364-23a8c76965a2ef7629b185e3",
 		}}
 	errorLinesExpected := []string{}
-	testALBLogParser(t, &logs, expected, errorLinesExpected)
-}
-
-func testALBLogParser(t *testing.T, logs *string, expected []common.MapStr, expectedErrorLines []string) {
-	results := make([]common.MapStr, 0, len(expected))
-	errors := make([]string, 0, len(expectedErrorLines))
-	err := S3ALBLogParser.Parse(strings.NewReader(*logs), func(s common.MapStr) {
-		results = append(results, s)
-	}, func(errLine string, err error) {
-		errors = append(errors, errLine)
-	})
-	assert.NoError(t, err)
-	assert.Len(t, errors, len(expectedErrorLines))
-	assert.Len(t, results, len(expected))
-	for idx, expEvent := range expected {
-		resultEvent := results[idx]
-		testutil.AssertEvent(t, expEvent, resultEvent)
-	}
-	assert.Equal(t, expectedErrorLines, errors)
+	logparser.AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
 }

@@ -3,13 +3,11 @@
 package aws
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/mpucholblasco/s3logsbeat/testutil"
-	"github.com/stretchr/testify/assert"
+	"github.com/mpucholblasco/s3logsbeat/logparser"
 )
 
 // Examples present here have been obtained from: https://docs.aws.amazon.com/es_es/elasticloadbalancing/latest/application/load-balancer-access-logs.html
@@ -65,23 +63,5 @@ func TestS3CloudFrontWebLogParse(t *testing.T) {
 	}
 
 	errorLinesExpected := []string{}
-	testCloudFrontLogParser(t, &logs, expected, errorLinesExpected)
-}
-
-func testCloudFrontLogParser(t *testing.T, logs *string, expected []common.MapStr, expectedErrorLines []string) {
-	results := make([]common.MapStr, 0, len(expected))
-	errors := make([]string, 0, len(expectedErrorLines))
-	err := S3CloudFrontWebLogParser.Parse(strings.NewReader(*logs), func(s common.MapStr) {
-		results = append(results, s)
-	}, func(errLine string, err error) {
-		errors = append(errors, errLine)
-	})
-	assert.NoError(t, err)
-	assert.Len(t, errors, len(expectedErrorLines))
-	assert.Len(t, results, len(expected))
-	for idx, expEvent := range expected {
-		resultEvent := results[idx]
-		testutil.AssertEvent(t, expEvent, resultEvent)
-	}
-	assert.Equal(t, expectedErrorLines, errors)
+	logparser.AssertLogParser(t, S3CloudFrontWebLogParser, &logs, expected, errorLinesExpected)
 }
