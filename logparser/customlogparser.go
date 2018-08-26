@@ -165,6 +165,14 @@ func (c *CustomLogParser) WithKindMap(reKindMap map[string]string) *CustomLogPar
 	return c
 }
 
+// SetKindMap configures current log parser to map types passed on reKindMap and
+// returns error (if present)
+func (c *CustomLogParser) SetKindMap(reKindMap map[string]string) error {
+	var err error
+	c.reKindMap, err = kindMapStringToType(reKindMap)
+	return err
+}
+
 // WithReIgnore configures current log parser to ignore lines that match reIgnore
 func (c *CustomLogParser) WithReIgnore(reIgnore *regexp.Regexp) *CustomLogParser {
 	c.reIgnore = reIgnore
@@ -204,15 +212,17 @@ LINE_READER:
 						continue
 					}
 
-					if k, ok := c.reKindMap[name]; ok {
-						if v, err := parseStringToKind(k, match[i]); err != nil {
-							eh(line, fmt.Errorf("Couldn't parse field (%s) to type (%s). Error: %+v", name, k.name, err))
-							continue LINE_READER
+					if emptyValue, ok := c.emptyValues[name]; !ok || emptyValue != match[i] {
+						if k, ok := c.reKindMap[name]; ok {
+							if v, err := parseStringToKind(k, match[i]); err != nil {
+								eh(line, fmt.Errorf("Couldn't parse field (%s) to type (%s). Error: %+v", name, k.name, err))
+								continue LINE_READER
+							} else {
+								captures.Put(name, v)
+							}
 						} else {
-							captures.Put(name, v)
+							captures.Put(name, match[i])
 						}
-					} else {
-						captures.Put(name, match[i])
 					}
 				}
 				mh(captures)

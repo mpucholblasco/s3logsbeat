@@ -320,6 +320,31 @@ func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
+func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
+	logs := `str1 2016-08-10T22:08:42.945958Z - 120 30123 true str2 - 0.0318353`
+	expected := []common.MapStr{
+		common.MapStr{
+			"string":  "str1",
+			"time":    time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			"int8":    int8(120),
+			"int16":   int16(30123),
+			"bool":    true,
+			"string2": "str2",
+			"float64": 0.0318353,
+		},
+	}
+
+	emptyValues := map[string]string{
+		"float32": "-",
+		"int":     "-",
+		"int8":    "-",
+	}
+
+	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind).WithEmptyValues(emptyValues)
+	expectedErrorsPrefix := []string{}
+	testCustomLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+}
+
 func TestCustomLogParserParseMultipleLines(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353
 strLine2 2018-07-15T21:18:47.483845Z 321345 25 27535 false str2Line2 0.312 0.323454555
