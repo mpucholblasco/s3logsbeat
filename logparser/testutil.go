@@ -5,17 +5,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/stretchr/testify/assert"
 )
 
 // AssertLogParser asserts that expectedEvents and expectedErrorsPrefix are equal to the obtained one when
 // parsing logs
-func AssertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []common.MapStr, expectedErrorsPrefix []string) {
-	results := make([]common.MapStr, 0, len(expectedEvents))
+func AssertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []beat.Event, expectedErrorsPrefix []string) {
+	results := make([]beat.Event, 0, len(expectedEvents))
 	errors := make([]error, 0, len(expectedErrorsPrefix))
-	err := p.Parse(strings.NewReader(*logs), func(s common.MapStr) {
-		results = append(results, s)
+	err := p.Parse(strings.NewReader(*logs), func(event beat.Event) {
+		results = append(results, event)
 	}, func(errLine string, err error) {
 		errors = append(errors, err)
 	})
@@ -24,7 +25,8 @@ func AssertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []c
 	assert.Len(t, results, len(expectedEvents))
 	for idx, expEvent := range expectedEvents {
 		resultEvent := results[idx]
-		AssertEvent(t, expEvent, resultEvent)
+		AssertEventFields(t, expEvent.Fields, resultEvent.Fields)
+		assert.Equal(t, expEvent.Timestamp, resultEvent.Timestamp)
 	}
 	for idx, expErr := range expectedErrorsPrefix {
 		err := errors[idx]
@@ -36,8 +38,8 @@ func AssertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []c
 	}
 }
 
-// AssertEvent asserts that expected and event maps are equal
-func AssertEvent(t *testing.T, expected, event common.MapStr) {
+// AssertEventFields asserts that expected and event maps are equal
+func AssertEventFields(t *testing.T, expected, event common.MapStr) {
 	for field, exp := range expected {
 		val, found := event[field]
 		if !found {
@@ -46,7 +48,7 @@ func AssertEvent(t *testing.T, expected, event common.MapStr) {
 		}
 
 		if sub, ok := exp.(common.MapStr); ok {
-			AssertEvent(t, sub, val.(common.MapStr))
+			AssertEventFields(t, sub, val.(common.MapStr))
 		} else {
 			if !assert.Equal(t, exp, val) {
 				t.Logf("failed in field: %v", field)

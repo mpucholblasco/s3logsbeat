@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/mpucholblasco/s3logsbeat/logparser"
 )
 
 const (
@@ -16,18 +17,20 @@ const (
 type SQS struct {
 	client *sqs.SQS
 	url    *string
+	Parser logparser.LogParser
 }
 
 type sqsMessageHandler func(*SQSMessage) error
 
 // NewSQS is a construct function for creating the object
 // with session and url of the queue as arguments
-func NewSQS(session *session.Session, queueURL *string) *SQS {
+func NewSQS(session *session.Session, queueURL *string, parser logparser.LogParser) *SQS {
 	client := sqs.New(session)
 
 	sqs := &SQS{
 		client: client,
 		url:    queueURL,
+		Parser: parser,
 	}
 
 	return sqs

@@ -93,9 +93,9 @@ func TestS3CreateEventCorrectSimple(t *testing.T) {
 	sqsMessage := NewSQSMessage(nil, message)
 	results := 0
 	sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) {
-		assert.Equal(t, "eu-west-1", s.region)
-		assert.Equal(t, "mybucket", s.s3Bucket)
-		assert.Equal(t, "app-env-3/AWSLogs/123456789012/elasticloadbalancing/eu-west-1/2018/07/07/123456789012_elasticloadbalancing_eu-west-1_app.app-env-3.ad4ceee8a897566c_20180707T0935Z_52.17.184.44_4vsrpn7y.log.gz", s.s3Key)
+		assert.Equal(t, "eu-west-1", s.Region)
+		assert.Equal(t, "mybucket", s.S3Bucket)
+		assert.Equal(t, "app-env-3/AWSLogs/123456789012/elasticloadbalancing/eu-west-1/2018/07/07/123456789012_elasticloadbalancing_eu-west-1_app.app-env-3.ad4ceee8a897566c_20180707T0935Z_52.17.184.44_4vsrpn7y.log.gz", s.S3Key)
 		results = results + 1
 	})
 	assert.Equal(t, 1, results)
@@ -154,9 +154,9 @@ func TestS3CreateEventCorrectEncoded(t *testing.T) {
 	sqsMessage := NewSQSMessage(nil, message)
 	results := 0
 	sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) {
-		assert.Equal(t, "eu-west-1", s.region)
-		assert.Equal(t, "mybucket", s.s3Bucket)
-		assert.Equal(t, "My simple [key]", s.s3Key)
+		assert.Equal(t, "eu-west-1", s.Region)
+		assert.Equal(t, "mybucket", s.S3Bucket)
+		assert.Equal(t, "My simple [key]", s.S3Key)
 		results = results + 1
 	})
 	assert.Equal(t, 1, results)

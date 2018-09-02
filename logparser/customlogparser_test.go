@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elastic/beats/libbeat/beat"
+
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,57 +45,63 @@ func TestIsLineIgnored(t *testing.T) {
 // Parse tests
 func TestCustomLogParserParseSingleLine(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353`
-	expected := []common.MapStr{
-		common.MapStr{
-			"string":  "str1",
-			"time":    "2016-08-10T22:08:42.945958Z",
-			"int":     "35325",
-			"int8":    "120",
-			"int16":   "30123",
-			"bool":    "true",
-			"string2": "str2",
-			"float32": "0.325",
-			"float64": "0.0318353",
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "str1",
+				"int":     "35325",
+				"int8":    "120",
+				"int16":   "30123",
+				"bool":    "true",
+				"string2": "str2",
+				"float32": "0.325",
+				"float64": "0.0318353",
+			},
 		},
 	}
 
-	parser := NewCustomLogParser(regexTest)
+	parser := NewCustomLogParser("time", regexTest)
 	expectedErrorsPrefix := []string{}
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353`
-	expected := []common.MapStr{
-		common.MapStr{
-			"string":  "str1",
-			"time":    time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
-			"int":     int(35325),
-			"int8":    int8(120),
-			"int16":   int16(30123),
-			"bool":    true,
-			"string2": "str2",
-			"float32": float32(0.325),
-			"float64": 0.0318353,
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "str1",
+				"int":     int(35325),
+				"int8":    int8(120),
+				"int16":   int16(30123),
+				"bool":    true,
+				"string2": "str2",
+				"float32": float32(0.325),
+				"float64": 0.0318353,
+			},
 		},
 	}
 
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
 	expectedErrorsPrefix := []string{}
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z - 120 30123 true str2 - 0.0318353`
-	expected := []common.MapStr{
-		common.MapStr{
-			"string":  "str1",
-			"time":    time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
-			"int8":    int8(120),
-			"int16":   int16(30123),
-			"bool":    true,
-			"string2": "str2",
-			"float64": 0.0318353,
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "str1",
+				"int8":    int8(120),
+				"int16":   int16(30123),
+				"bool":    true,
+				"string2": "str2",
+				"float64": 0.0318353,
+			},
 		},
 	}
 
@@ -103,7 +111,7 @@ func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
 		"int8":    "-",
 	}
 
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind).WithEmptyValues(emptyValues)
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind).WithEmptyValues(emptyValues)
 	expectedErrorsPrefix := []string{}
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
@@ -112,44 +120,49 @@ func TestCustomLogParserParseMultipleLines(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353
 strLine2 2018-07-15T21:18:47.483845Z 321345 25 27535 false str2Line2 0.312 0.323454555
 strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
-
-	expected := []common.MapStr{
-		common.MapStr{
-			"string":  "str1",
-			"time":    time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
-			"int":     int(35325),
-			"int8":    int8(120),
-			"int16":   int16(30123),
-			"bool":    true,
-			"string2": "str2",
-			"float32": float32(0.325),
-			"float64": 0.0318353,
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "str1",
+				"int":     int(35325),
+				"int8":    int8(120),
+				"int16":   int16(30123),
+				"bool":    true,
+				"string2": "str2",
+				"float32": float32(0.325),
+				"float64": 0.0318353,
+			},
 		},
-		common.MapStr{
-			"string":  "strLine2",
-			"time":    time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
-			"int":     int(321345),
-			"int8":    int8(25),
-			"int16":   int16(27535),
-			"bool":    false,
-			"string2": "str2Line2",
-			"float32": float32(0.312),
-			"float64": 0.323454555,
+		beat.Event{
+			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "strLine2",
+				"int":     int(321345),
+				"int8":    int8(25),
+				"int16":   int16(27535),
+				"bool":    false,
+				"string2": "str2Line2",
+				"float32": float32(0.312),
+				"float64": 0.323454555,
+			},
 		},
-		common.MapStr{
-			"string":  "strLine3",
-			"time":    time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
-			"int":     int(12345),
-			"int8":    int8(5),
-			"int16":   int16(31123),
-			"bool":    true,
-			"string2": "str2",
-			"float32": float32(0.111),
-			"float64": 0.123456,
+		beat.Event{
+			Timestamp: time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "strLine3",
+				"int":     int(12345),
+				"int8":    int8(5),
+				"int16":   int16(31123),
+				"bool":    true,
+				"string2": "str2",
+				"float32": float32(0.111),
+				"float64": 0.123456,
+			},
 		},
 	}
 
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
 	expectedErrorsPrefix := []string{}
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
@@ -166,55 +179,61 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 
 `
 
-	expected := []common.MapStr{
-		common.MapStr{
-			"string":  "str1",
-			"time":    time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
-			"int":     int(35325),
-			"int8":    int8(120),
-			"int16":   int16(30123),
-			"bool":    true,
-			"string2": "str2",
-			"float32": float32(0.325),
-			"float64": 0.0318353,
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "str1",
+				"int":     int(35325),
+				"int8":    int8(120),
+				"int16":   int16(30123),
+				"bool":    true,
+				"string2": "str2",
+				"float32": float32(0.325),
+				"float64": 0.0318353,
+			},
 		},
-		common.MapStr{
-			"string":  "strLine2",
-			"time":    time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
-			"int":     int(321345),
-			"int8":    int8(25),
-			"int16":   int16(27535),
-			"bool":    false,
-			"string2": "str2Line2",
-			"float32": float32(0.312),
-			"float64": 0.323454555,
+		beat.Event{
+			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "strLine2",
+				"int":     int(321345),
+				"int8":    int8(25),
+				"int16":   int16(27535),
+				"bool":    false,
+				"string2": "str2Line2",
+				"float32": float32(0.312),
+				"float64": 0.323454555,
+			},
 		},
-		common.MapStr{
-			"string":  "strLine3",
-			"time":    time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
-			"int":     int(12345),
-			"int8":    int8(5),
-			"int16":   int16(31123),
-			"bool":    true,
-			"string2": "str2",
-			"float32": float32(0.111),
-			"float64": 0.123456,
+		beat.Event{
+			Timestamp: time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "strLine3",
+				"int":     int(12345),
+				"int8":    int8(5),
+				"int16":   int16(31123),
+				"bool":    true,
+				"string2": "str2",
+				"float32": float32(0.111),
+				"float64": 0.123456,
+			},
 		},
 	}
 
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind).WithReIgnore(regexp.MustCompile(`^\s*#`))
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind).WithReIgnore(regexp.MustCompile(`^\s*#`))
 	expectedErrorsPrefix := []string{}
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseErrorLines(t *testing.T) {
 	logs := `str1 not-a-valid-date 35325 120 30123 true str2 0.325 0.0318353`
-	expected := []common.MapStr{}
+	expected := []beat.Event{}
 	expectedErrorsPrefix := []string{
 		`Couldn't parse field (time) to type (timeISO8601). Error: parsing time "not-a-valid-date"`,
 	}
 
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
@@ -223,17 +242,19 @@ func TestCustomLogParserInvalidFormat(t *testing.T) {
 strLine2 2018-07-15T21:18:47.483845Z 321345 25 27535 false str2Line2 0.312 0.323454555
 Incorrect line2
 `
-	expected := []common.MapStr{
-		common.MapStr{
-			"string":  "strLine2",
-			"time":    time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
-			"int":     int(321345),
-			"int8":    int8(25),
-			"int16":   int16(27535),
-			"bool":    false,
-			"string2": "str2Line2",
-			"float32": float32(0.312),
-			"float64": 0.323454555,
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
+			Fields: common.MapStr{
+				"string":  "strLine2",
+				"int":     int(321345),
+				"int8":    int8(25),
+				"int16":   int16(27535),
+				"bool":    false,
+				"string2": "str2Line2",
+				"float32": float32(0.312),
+				"float64": 0.323454555,
+			},
 		},
 	}
 	expectedErrorsPrefix := []string{
@@ -241,15 +262,15 @@ Incorrect line2
 		"Line does not match expected format",
 	}
 
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserNothingProcessedOnReaderError(t *testing.T) {
 	ok := 0
 	ko := 0
-	parser := NewCustomLogParser(regexTest).WithKindMap(regexKind)
-	err := parser.Parse(&testReader{}, func(s common.MapStr) {
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
+	err := parser.Parse(&testReader{}, func(event beat.Event) {
 		ok++
 	}, func(errLine string, err error) {
 		ko++

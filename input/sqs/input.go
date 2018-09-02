@@ -3,6 +3,7 @@ package log
 import (
 	"github.com/mpucholblasco/s3logsbeat/aws"
 	"github.com/mpucholblasco/s3logsbeat/input"
+	"github.com/mpucholblasco/s3logsbeat/logparser"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
@@ -46,8 +47,9 @@ func NewInput(
 func (p *Input) Run() {
 	logp.Debug("s3logsbeat", "Start next scan")
 	awsSession := aws.NewSession()
+	logParser := p.getLogParser()
 	for _, queue := range p.config.QueuesURL {
-		sqs := aws.NewSQS(awsSession, &queue)
+		sqs := aws.NewSQS(awsSession, &queue, logParser)
 		p.chanSQS <- sqs
 	}
 }
@@ -70,4 +72,12 @@ func (p *Input) Stop() {
 
 	// stop all communication between harvesters and publisher pipeline
 	//p.outlet.Close()
+}
+
+func (p *Input) getLogParser() logparser.LogParser {
+	switch p.config.LogFormat {
+	case "alb":
+		return aws.S3ALBLogParser
+	}
+	return nil
 }

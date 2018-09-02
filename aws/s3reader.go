@@ -11,12 +11,11 @@ import (
 // S3 handle simple S3 methods
 type S3 struct {
 	client *s3.S3
-	url    *string
 }
 
 // NewS3 is a construct function for creating the object
 // with session
-func NewS3(session *session.Session, queueURL *string) *S3 {
+func NewS3(session *session.Session) *S3 {
 	client := s3.New(session)
 
 	s3 := &S3{

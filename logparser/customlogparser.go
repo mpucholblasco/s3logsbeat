@@ -4,27 +4,32 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"reflect"
 	"regexp"
+	"time"
 
+	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 )
 
 // CustomLogParser contains information of S3 objects (sqsMessage not
 // null implies that this object is extracted from an SQS message)
 type CustomLogParser struct {
-	re          *regexp.Regexp
-	reIgnore    *regexp.Regexp
-	reNames     []string
-	reKindMap   map[string]kindElement
-	emptyValues map[string]string
+	timestampField string
+	re             *regexp.Regexp
+	reIgnore       *regexp.Regexp
+	reNames        []string
+	reKindMap      map[string]kindElement
+	emptyValues    map[string]string
 }
 
 // NewCustomLogParser creates a new custom log parser based on regular expression
 // to detect fields in a log line (re)
-func NewCustomLogParser(re *regexp.Regexp) *CustomLogParser {
+func NewCustomLogParser(timestampField string, re *regexp.Regexp) *CustomLogParser {
 	return &CustomLogParser{
-		re:      re,
-		reNames: re.SubexpNames(),
+		timestampField: timestampField,
+		re:             re,
+		reNames:        re.SubexpNames(),
 	}
 }
 
@@ -73,7 +78,7 @@ func (c *CustomLogParser) WithEmptyValues(emptyValues map[string]string) *Custom
 }
 
 // Parse parses a reader and sends errors and parsed elements to handlers
-func (c *CustomLogParser) Parse(reader io.Reader, mh func(common.MapStr), eh func(string, error)) error {
+func (c *CustomLogParser) Parse(reader io.Reader, mh func(beat.Event), eh func(string, error)) error {
 	r := bufio.NewReader(reader)
 	re := c.re.Copy()
 	var reIgnore *regexp.Regexp
@@ -92,7 +97,7 @@ LINE_READER:
 			if match == nil {
 				eh(line, fmt.Errorf("Line does not match expected format"))
 			} else {
-				captures := common.MapStr{}
+				fields := common.MapStr{}
 				for i, name := range c.reNames {
 					// Ignore the whole regexp match and unnamed groups
 					if i == 0 || name == "" {
@@ -105,14 +110,24 @@ LINE_READER:
 								eh(line, fmt.Errorf("Couldn't parse field (%s) to type (%s). Error: %+v", name, k.name, err))
 								continue LINE_READER
 							} else {
-								captures.Put(name, v)
+								fields.Put(name, v)
 							}
 						} else {
-							captures.Put(name, match[i])
+							fields.Put(name, match[i])
 						}
 					}
 				}
-				mh(captures)
+				timestamp := fields[c.timestampField]
+				if reflect.TypeOf(timestamp).String() != "time.Time" {
+					eh(line, fmt.Errorf("Field %s set as timestamp, but it's kind is not time", c.timestampField))
+					continue LINE_READER
+				}
+				fields.Delete(c.timestampField)
+				event := beat.Event{
+					Timestamp: timestamp.(time.Time),
+					Fields:    fields,
+				}
+				mh(event)
 			}
 		}
 

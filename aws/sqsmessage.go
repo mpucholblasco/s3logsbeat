@@ -11,16 +11,16 @@ import (
 
 // SQSMessage SQS message
 type SQSMessage struct {
-	sqs     *SQS
-	message *sqs.Message
+	SQS     *SQS
+	Message *sqs.Message
 }
 
 // NewSQSMessage is a construct function for creating the object
 // with session and url of the queue as arguments
 func NewSQSMessage(sqs *SQS, message *sqs.Message) *SQSMessage {
 	sqsMessage := &SQSMessage{
-		sqs:     sqs,
-		message: message,
+		SQS:     sqs,
+		Message: message,
 	}
 
 	return sqsMessage
@@ -28,29 +28,29 @@ func NewSQSMessage(sqs *SQS, message *sqs.Message) *SQSMessage {
 
 // GetID get message ID
 func (sm *SQSMessage) GetID() *string {
-	return sm.message.MessageId
+	return sm.Message.MessageId
 }
 
 // GetBody get message body
 func (sm *SQSMessage) GetBody() *string {
-	return sm.message.Body
+	return sm.Message.Body
 }
 
 // Delete deletes message
 func (sm *SQSMessage) Delete() error {
-	return sm.sqs.DeleteMessage(sm.message.ReceiptHandle)
+	return sm.SQS.DeleteMessage(sm.Message.ReceiptHandle)
 }
 
 // String converts to String
 func (sm *SQSMessage) String() string {
-	return fmt.Sprintf("%+v", sm.message)
+	return fmt.Sprintf("%+v", sm.Message)
 }
 
 // VerifyMD5Sum returns true if MD5 passed on message corresponds with the one
 // obtained from body.
 func (sm *SQSMessage) VerifyMD5Sum() bool {
 	h := md5.New()
-	io.WriteString(h, *sm.message.Body)
+	io.WriteString(h, *sm.Message.Body)
 	md5body := hex.EncodeToString(h.Sum(nil))
-	return md5body == *sm.message.MD5OfBody
+	return md5body == *sm.Message.MD5OfBody
 }
