@@ -70,6 +70,9 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 
 	chanS3 := make(chan *aws.S3ObjectSQSMessage, 100)
 
+	s3readerWorker := worker.NewS3ReaderWorker(chanS3, bt.client)
+	s3readerWorker.Start()
+
 	sqsConsumerWorker := worker.NewSQSConsumerWorker(chanSQS, chanS3)
 	sqsConsumerWorker.Start()
 
@@ -89,6 +92,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 
 	crawler.Stop()
 	sqsConsumerWorker.Stop()
+	s3readerWorker.Stop()
 
 	//timeout := fb.config.ShutdownTimeout
 	// Checks if on shutdown it should wait for all events to be published

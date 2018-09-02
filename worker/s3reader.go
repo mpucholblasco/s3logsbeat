@@ -49,6 +49,7 @@ func (w *S3ReaderWorker) Start() {
 					readCloser, err := s3.GetReadCloser(s3object.S3Bucket, s3object.S3Key)
 					if err != nil {
 						logp.Err("Could not download S3 object from region=%s, bucket=%s, key=%s", s3object.Region, s3object.S3Bucket, s3object.S3Key)
+						continue
 					}
 					defer readCloser.Close()
 					s3object.SQSMessage.SQS.Parser.Parse(readCloser, func(event beat.Event) {
@@ -62,7 +63,7 @@ func (w *S3ReaderWorker) Start() {
 	}
 }
 
-// Stop stops SQSConsumerWorker and closes output channel
+// Stop sends notification to stop to workers and wait untill all workers finish
 func (w *S3ReaderWorker) Stop() {
 	logp.Debug("s3logsbeat", "Stopping S3 reader workers")
 	close(w.done)

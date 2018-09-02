@@ -49,6 +49,7 @@ func TestCustomLogParserParseSingleLine(t *testing.T) {
 		beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "2db0da2449bcdbf8f1838844107a490f2773e09e",
 				"string":  "str1",
 				"int":     "35325",
 				"int8":    "120",
@@ -61,7 +62,11 @@ func TestCustomLogParserParseSingleLine(t *testing.T) {
 		},
 	}
 
-	parser := NewCustomLogParser("time", regexTest)
+	parser := NewCustomLogParser("time", regexTest).WithKindMap(
+		map[string]string{
+			"time": "timeISO8601",
+		},
+	)
 	expectedErrorsPrefix := []string{}
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
@@ -72,6 +77,7 @@ func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 		beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "2db0da2449bcdbf8f1838844107a490f2773e09e",
 				"string":  "str1",
 				"int":     int(35325),
 				"int8":    int8(120),
@@ -95,6 +101,7 @@ func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
 		beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "0c2f4767adbc506b33eb9fd8dc7ad47bf18dfb50",
 				"string":  "str1",
 				"int8":    int8(120),
 				"int16":   int16(30123),
@@ -116,6 +123,55 @@ func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
 	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
+func TestCustomLogParserParseSingleLineWithConditionals(t *testing.T) {
+	r := regexp.MustCompile(`^(?P<string>[^ ]*) (?P<time>[^ ]*) (?P<int>[-0-9]*) ((?P<target_ip>[^ ]+)[:-](?P<target_port>[0-9]+)|-)( (?P<intopt>[-0-9]*))?`)
+	km := map[string]string{
+		"time":        "timeISO8601",
+		"int":         "int",
+		"target_port": "uint16",
+		"intopt":      "int",
+	}
+
+	logs := `str1 2016-08-10T22:08:42.945958Z 57 1.2.3.4:123 4567
+str2 2017-12-18T23:09:45.945958Z 58 - 45678
+str3 2019-12-18T23:09:45.945958Z 59 -
+`
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"_id":         "6d7a371b5bd42f8240106580733ec63e397db158",
+				"string":      "str1",
+				"int":         int(57),
+				"target_ip":   "1.2.3.4",
+				"target_port": uint16(123),
+				"intopt":      int(4567),
+			},
+		},
+		beat.Event{
+			Timestamp: time.Date(2017, 12, 18, 23, 9, 45, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"_id":    "e6657a85ed4f1e9e7c280815af782166c0bbe4bf",
+				"string": "str2",
+				"int":    int(58),
+				"intopt": int(45678),
+			},
+		},
+		beat.Event{
+			Timestamp: time.Date(2019, 12, 18, 23, 9, 45, 945958000, time.UTC),
+			Fields: common.MapStr{
+				"_id":    "fdd3dd82bce86471e109171626105a34e0f4f798",
+				"string": "str3",
+				"int":    int(59),
+			},
+		},
+	}
+
+	parser := NewCustomLogParser("time", r).WithKindMap(km)
+	expectedErrorsPrefix := []string{}
+	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+}
+
 func TestCustomLogParserParseMultipleLines(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353
 strLine2 2018-07-15T21:18:47.483845Z 321345 25 27535 false str2Line2 0.312 0.323454555
@@ -124,6 +180,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 		beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "4fa1020dbfc28237c745009a6e13c87fd8546e91",
 				"string":  "str1",
 				"int":     int(35325),
 				"int8":    int8(120),
@@ -137,6 +194,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 		beat.Event{
 			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "bf63b2f1b77a4ef54ed707b9d4eca8006e0049d2",
 				"string":  "strLine2",
 				"int":     int(321345),
 				"int8":    int8(25),
@@ -150,6 +208,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 		beat.Event{
 			Timestamp: time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "69feaceba421db7b52f65815422fb5abc55d6e37",
 				"string":  "strLine3",
 				"int":     int(12345),
 				"int8":    int8(5),
@@ -183,6 +242,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 		beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "4fa1020dbfc28237c745009a6e13c87fd8546e91",
 				"string":  "str1",
 				"int":     int(35325),
 				"int8":    int8(120),
@@ -196,6 +256,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 		beat.Event{
 			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "bf63b2f1b77a4ef54ed707b9d4eca8006e0049d2",
 				"string":  "strLine2",
 				"int":     int(321345),
 				"int8":    int8(25),
@@ -209,6 +270,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 		beat.Event{
 			Timestamp: time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
 			Fields: common.MapStr{
+				"_id":     "a9ffb794f6ead3fca7d4a98c58784ade15608430",
 				"string":  "strLine3",
 				"int":     int(12345),
 				"int8":    int8(5),

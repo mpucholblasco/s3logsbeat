@@ -2,9 +2,10 @@ package logparser
 
 import (
 	"bufio"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"io"
-	"reflect"
 	"regexp"
 	"time"
 
@@ -99,8 +100,8 @@ LINE_READER:
 			} else {
 				fields := common.MapStr{}
 				for i, name := range c.reNames {
-					// Ignore the whole regexp match and unnamed groups
-					if i == 0 || name == "" {
+					// Ignore the whole regexp match, unnamed groups, and empty values
+					if i == 0 || name == "" || match[i] == "" {
 						continue
 					}
 
@@ -117,14 +118,17 @@ LINE_READER:
 						}
 					}
 				}
-				timestamp := fields[c.timestampField]
-				if reflect.TypeOf(timestamp).String() != "time.Time" {
+				timestamp, ok := fields[c.timestampField].(time.Time)
+				if !ok {
 					eh(line, fmt.Errorf("Field %s set as timestamp, but it's kind is not time", c.timestampField))
 					continue LINE_READER
 				}
 				fields.Delete(c.timestampField)
+				h := sha1.New()
+				io.WriteString(h, line)
+				fields["_id"] = hex.EncodeToString(h.Sum(nil))
 				event := beat.Event{
-					Timestamp: timestamp.(time.Time),
+					Timestamp: timestamp,
 					Fields:    fields,
 				}
 				mh(event)

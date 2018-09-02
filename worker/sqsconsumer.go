@@ -36,6 +36,7 @@ func (w *SQSConsumerWorker) Start() {
 		go func(workerId int) {
 			defer w.wg.Done()
 			logp.Info("SQS consumer worker #%d : waiting for input data", workerId)
+		INPUT_LOOP:
 			for {
 				select {
 				case <-w.done:
@@ -61,10 +62,10 @@ func (w *SQSConsumerWorker) Start() {
 							})
 							if err != nil {
 								logp.Err("Could not receive SQS messages: %v", err)
-								break
+								continue INPUT_LOOP
 							}
 							if !more {
-								break
+								continue INPUT_LOOP
 							}
 							// TODO: add messagesReceived to monitor
 							logp.Debug("s3logsbeat", "Received %d messages from SQS queue", messagesReceived)
@@ -76,7 +77,7 @@ func (w *SQSConsumerWorker) Start() {
 	}
 }
 
-// Stop stops SQSConsumerWorker and closes output channel
+// Stop sends notification to stop to workers and wait untill all workers finish
 func (w *SQSConsumerWorker) Stop() {
 	logp.Debug("s3logsbeat", "Stopping SQS consumer workers")
 	close(w.done)
