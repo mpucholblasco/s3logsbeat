@@ -53,10 +53,13 @@ func (w *S3ReaderWorker) Start() {
 					}
 					defer readCloser.Close()
 					s3object.SQSMessage.SQS.Parser.Parse(readCloser, func(event beat.Event) {
+						s3object.SQSMessage.AddEvents(1)
+						event.Private = s3object.SQSMessage // store to reduce on ACK function
 						w.out.Publish(event)
 					}, func(errLine string, err error) {
 						logp.Warn("Could not parse line: %s, reason: %+v", errLine, err)
 					})
+					s3object.SQSMessage.S3ObjectProcessed()
 				}
 			}
 		}(n)
