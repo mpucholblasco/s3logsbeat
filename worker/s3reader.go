@@ -62,9 +62,7 @@ func (w *S3ReaderWorker) Start() {
 						event.Private = s3object.SQSMessage // store to reduce on ACK function
 						s3object.SQSMessage.AddEvents(1)
 						w.wgEvents.Add(1)
-						logp.Debug("s3logsbeat", "Before publish %d", workerId)
 						w.out.Publish(event)
-						logp.Debug("s3logsbeat", "After publish %d", workerId)
 					}, func(errLine string, err error) {
 						logp.Warn("Could not parse line: %s, reason: %+v", errLine, err)
 					})
@@ -75,9 +73,11 @@ func (w *S3ReaderWorker) Start() {
 	}
 }
 
-// Stop sends notification to stop to workers and wait untill all workers finish
+// Stop sends notification to stop to workers and wait untill all workers finish.
+// We will not accept more S3 objects
 func (w *S3ReaderWorker) Stop() {
 	logp.Debug("s3logsbeat", "Stopping S3 reader workers")
+	w.in = nil
 	close(w.done)
 	w.wg.Wait()
 	logp.Debug("s3logsbeat", "S3 reader workers stopped")

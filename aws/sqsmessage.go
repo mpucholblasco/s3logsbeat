@@ -7,6 +7,8 @@ import (
 	"io"
 	"sync"
 
+	"github.com/elastic/beats/libbeat/logp"
+
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
@@ -44,7 +46,10 @@ func (sm *SQSMessage) GetBody() *string {
 
 // Delete deletes message
 func (sm *SQSMessage) Delete() error {
-	return sm.SQS.DeleteMessage(sm.Message.ReceiptHandle)
+	if sm.SQS != nil {
+		return sm.SQS.DeleteMessage(sm.Message.ReceiptHandle)
+	}
+	return nil
 }
 
 // String converts to String
@@ -90,6 +95,8 @@ func (sm *SQSMessage) EventsProcessed(c uint64) {
 
 func (sm *SQSMessage) deleteOnJobCompleted() {
 	if sm.s3objects == 0 && sm.events == 0 {
-		sm.Delete()
+		logp.Info("Deleting message with receipt %s from SQS", *sm.Message.ReceiptHandle)
+		// TODO: uncomment
+		//sm.Delete()
 	}
 }

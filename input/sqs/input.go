@@ -50,28 +50,26 @@ func (p *Input) Run() {
 	logParser := p.getLogParser()
 	for _, queue := range p.config.QueuesURL {
 		sqs := aws.NewSQS(awsSession, &queue, logParser)
-		p.chanSQS <- sqs
+
+		select {
+		case p.chanSQS <- sqs:
+			continue
+		case <-p.done:
+			return
+		}
 	}
 }
 
-// Wait waits for the all harvesters to complete and only then call stop
+// Wait stops the input
+// Once the app is goning to stop, we will not accept more SQS messages, so we can stop
+// this input directly
 func (p *Input) Wait() {
-	//p.harvesters.WaitForCompletion()
-	//p.Stop()
+	p.Stop()
 }
 
-// Stop stops all harvesters and then stops the input
+// Stop stops the input
 func (p *Input) Stop() {
-	// Stop all harvesters
-	// In case the beatDone channel is closed, this will not wait for completion
-	// Otherwise Stop will wait until output is complete
-	//p.harvesters.Stop()
-
-	// close state updater
-	//p.stateOutlet.Close()
-
-	// stop all communication between harvesters and publisher pipeline
-	//p.outlet.Close()
+	// Nothing to do, as we don't control done channel and it should already be closed
 }
 
 func (p *Input) getLogParser() logparser.LogParser {

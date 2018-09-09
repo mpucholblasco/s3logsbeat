@@ -21,7 +21,7 @@ type S3ObjectSQSMessage struct {
 	S3Key      string
 }
 
-type s3messageHandler func(*S3ObjectSQSMessage)
+type s3messageHandler func(*S3ObjectSQSMessage) error
 
 type s3Event struct {
 	Records []struct {
@@ -51,7 +51,8 @@ func (sm *SQSMessage) ExtractNewS3Objects(mh s3messageHandler) error {
 	defer sm.mutex.Unlock()
 	var s3e s3Event
 	if err := json.Unmarshal([]byte(*sm.Message.Body), &s3e); err != nil {
-		return err
+		logp.Warn("Couldn't parse json from S3. Ignoring this SQS mess. Error: %v", err)
+		return nil
 	}
 	var c uint64
 	for _, e := range s3e.Records {
@@ -60,12 +61,15 @@ func (sm *SQSMessage) ExtractNewS3Objects(mh s3messageHandler) error {
 				logp.Warn("Could not unescape S3 object: %s", e.S3.Object.Key)
 			} else {
 				c++
-				mh(&S3ObjectSQSMessage{
+				if err := mh(&S3ObjectSQSMessage{
 					SQSMessage: sm,
 					Region:     e.AwsRegion,
 					S3Bucket:   e.S3.Bucket.Name,
 					S3Key:      s3key,
-				})
+				}); err != nil {
+					// Client want to cancel process, passing as an error to parent
+					return err
+				}
 			}
 		}
 	}

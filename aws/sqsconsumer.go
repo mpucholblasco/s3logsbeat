@@ -59,7 +59,9 @@ func (s *SQS) ReceiveMessages(mh sqsMessageHandler) (int, bool, error) {
 
 	received += len(resp.Messages)
 	for i := range resp.Messages {
-		mh(NewSQSMessage(s, resp.Messages[i]))
+		if err := mh(NewSQSMessage(s, resp.Messages[i])); err != nil {
+			return 0, false, err
+		}
 	}
 	return received, len(resp.Messages) == sqsMaxNumberOfMessages, nil
 }

@@ -32,12 +32,11 @@ func TestS3CreateEventIncorrect(t *testing.T) {
 		ReceiptHandle: aws.String("fakeReceipt"),
 	}
 	sqsMessage := NewSQSMessage(nil, message)
-	results := 0
-	err := sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) {
-		results = results + 1
+	err := sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) error {
+		return nil
 	})
-	assert.Error(t, err)
-	assert.Equal(t, 0, results)
+	assert.NoError(t, err) // only generates an error on log
+	assert.Equal(t, uint64(0), sqsMessage.events)
 }
 
 func TestS3CreateEventCorrectSimple(t *testing.T) {
@@ -91,14 +90,14 @@ func TestS3CreateEventCorrectSimple(t *testing.T) {
 		ReceiptHandle: aws.String("fakeReceipt"),
 	}
 	sqsMessage := NewSQSMessage(nil, message)
-	results := 0
-	sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) {
+	err := sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) error {
 		assert.Equal(t, "eu-west-1", s.Region)
 		assert.Equal(t, "mybucket", s.S3Bucket)
 		assert.Equal(t, "app-env-3/AWSLogs/123456789012/elasticloadbalancing/eu-west-1/2018/07/07/123456789012_elasticloadbalancing_eu-west-1_app.app-env-3.ad4ceee8a897566c_20180707T0935Z_52.17.184.44_4vsrpn7y.log.gz", s.S3Key)
-		results = results + 1
+		return nil
 	})
-	assert.Equal(t, 1, results)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), sqsMessage.s3objects)
 }
 
 func TestS3CreateEventCorrectEncoded(t *testing.T) {
@@ -152,14 +151,14 @@ func TestS3CreateEventCorrectEncoded(t *testing.T) {
 		ReceiptHandle: aws.String("fakeReceipt"),
 	}
 	sqsMessage := NewSQSMessage(nil, message)
-	results := 0
-	sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) {
+	err := sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) error {
 		assert.Equal(t, "eu-west-1", s.Region)
 		assert.Equal(t, "mybucket", s.S3Bucket)
 		assert.Equal(t, "My simple [key]", s.S3Key)
-		results = results + 1
+		return nil
 	})
-	assert.Equal(t, 1, results)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), sqsMessage.s3objects)
 }
 
 func TestS3CreateEventIncorrectlyEncoded(t *testing.T) {
@@ -213,10 +212,10 @@ func TestS3CreateEventIncorrectlyEncoded(t *testing.T) {
 		ReceiptHandle: aws.String("fakeReceipt"),
 	}
 	sqsMessage := NewSQSMessage(nil, message)
-	results := 0
-	sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) {
+	err := sqsMessage.ExtractNewS3Objects(func(s *S3ObjectSQSMessage) error {
 		// Not called, only shown a warn on log
-		results = results + 1
+		return nil
 	})
-	assert.Equal(t, 0, results)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(0), sqsMessage.s3objects)
 }

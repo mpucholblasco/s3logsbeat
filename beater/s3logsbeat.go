@@ -120,14 +120,16 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitFinished.Wait()
 
 	crawler.Stop()
-	sqsConsumerWorker.Stop() // Do not read more SQS messages because we are closing
+	sqsConsumerWorker.StopAcceptingMessages()
 
 	timeout := bt.config.ShutdownTimeout
 	// Checks if on shutdown it should wait for all events to be published
 	waitPublished := timeout > 0 || *once
 	if waitPublished {
-		logp.Debug("s3logsbeat", "AAAA")
 		// Wait for registrar to finish writing registry
+		// WE CAN NOT USE wgEvents.Wait because we will add more events
+		// MAYBE WE CAN CLOSE CHANNELS ON WORKERS TO AVOID THIS PROBLEM
+		// AND USE THESE CHANNELS
 		waitEvents.Add(withLog(wgEvents.Wait,
 			"Continue shutdown: All enqueued events being published."))
 		// Wait for either timeout or all events having been ACKed by outputs.
@@ -136,7 +138,6 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 			waitEvents.Add(withLog(waitDuration(timeout),
 				"Continue shutdown: Time out waiting for events being published."))
 		} else {
-			logp.Debug("s3logsbeat", "BBBB")
 			waitEvents.AddChan(bt.done)
 		}
 	}
@@ -145,11 +146,9 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	logp.Debug("s3logsbeat", "Waiting for all events to be processed")
 	waitEvents.Wait()
 
-	logp.Debug("s3logsbeat", "Stopping S3 reader workers")
-	s3readerWorker.Stop()
-
-	// Close publisher
+	sqsConsumerWorker.Stop()
 	bt.client.Close()
+	s3readerWorker.Stop()
 
 	// Close registrar
 	logp.Debug("s3logsbeat", "Stopping registrar")
