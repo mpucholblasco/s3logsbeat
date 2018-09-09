@@ -48,6 +48,20 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitFinished := newSignalWait()
 	waitEvents := newSignalWait()
 
+	// count SQS messages for monitoring purposes
+	wgSQSMessages := &eventCounter{
+		count: monitoring.NewInt(nil, "s3logsbeat.sqsMessages.active"),
+		added: monitoring.NewUint(nil, "s3logsbeat.sqsMessages.added"),
+		done:  monitoring.NewUint(nil, "s3logsbeat.sqsMessages.done"),
+	}
+
+	// count S3 objects for monitoring purposes
+	wgS3Objects := &eventCounter{
+		count: monitoring.NewInt(nil, "s3logsbeat.s3objects.active"),
+		added: monitoring.NewUint(nil, "s3logsbeat.s3objects.added"),
+		done:  monitoring.NewUint(nil, "s3logsbeat.s3objects.done"),
+	}
+
 	// count active events for waiting on shutdown
 	wgEvents := &eventCounter{
 		count: monitoring.NewInt(nil, "s3logsbeat.events.active"),
@@ -75,7 +89,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	chanSQS := make(chan *aws.SQS, 100)
+	chanSQS := make(chan *aws.SQS, 5)
 
 	crawler, err := crawler.New(
 		bt.config.Inputs,
@@ -97,12 +111,12 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	chanS3 := make(chan *aws.S3ObjectSQSMessage, 100)
+	chanS3 := make(chan *aws.S3ObjectSQSMessage, 10)
 
-	s3readerWorker := worker.NewS3ReaderWorker(chanS3, bt.client, wgEvents)
+	s3readerWorker := worker.NewS3ReaderWorker(chanS3, bt.client, wgEvents, wgS3Objects)
 	s3readerWorker.Start()
 
-	sqsConsumerWorker := worker.NewSQSConsumerWorker(chanSQS, chanS3)
+	sqsConsumerWorker := worker.NewSQSConsumerWorker(chanSQS, chanS3, wgSQSMessages, wgS3Objects)
 	sqsConsumerWorker.Start()
 
 	// If run once, add crawler completion check as alternative to done signal
@@ -126,11 +140,13 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	// Checks if on shutdown it should wait for all events to be published
 	waitPublished := timeout > 0 || *once
 	if waitPublished {
-		// Wait for registrar to finish writing registry
-		// WE CAN NOT USE wgEvents.Wait because we will add more events
-		// MAYBE WE CAN CLOSE CHANNELS ON WORKERS TO AVOID THIS PROBLEM
-		// AND USE THESE CHANNELS
-		waitEvents.Add(withLog(wgEvents.Wait,
+		// Wait until all will be done + all events published
+		waitEvents.Add(withLog(func() {
+			sqsConsumerWorker.Wait()
+			close(chanS3)
+			s3readerWorker.Wait()
+			wgEvents.Wait()
+		},
 			"Continue shutdown: All enqueued events being published."))
 		// Wait for either timeout or all events having been ACKed by outputs.
 		if timeout > 0 {
@@ -143,7 +159,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	}
 
 	// Wait for all events to be processed or timeout
-	logp.Debug("s3logsbeat", "Waiting for all events to be processed")
+	logp.Debug("s3logsbeat", "Waiting for all events to be processed or timeout")
 	waitEvents.Wait()
 
 	sqsConsumerWorker.Stop()

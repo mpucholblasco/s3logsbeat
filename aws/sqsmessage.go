@@ -21,6 +21,9 @@ type SQSMessage struct {
 	mutex     sync.Mutex
 	s3objects uint64
 	events    uint64
+
+	// Events
+	onDeleteCallbacks []func()
 }
 
 // NewSQSMessage is a construct function for creating the object
@@ -30,8 +33,16 @@ func NewSQSMessage(sqs *SQS, message *sqs.Message) *SQSMessage {
 		SQS:     sqs,
 		Message: message,
 	}
+	logp.Info("Generated new SQS message with ID %s", *message.MessageId)
 
 	return sqsMessage
+}
+
+// Events
+
+// OnDelete adds callback for OnDelete event
+func (sm *SQSMessage) OnDelete(f func()) {
+	sm.onDeleteCallbacks = append(sm.onDeleteCallbacks, f)
 }
 
 // GetID get message ID
@@ -47,7 +58,11 @@ func (sm *SQSMessage) GetBody() *string {
 // Delete deletes message
 func (sm *SQSMessage) Delete() error {
 	if sm.SQS != nil {
-		return sm.SQS.DeleteMessage(sm.Message.ReceiptHandle)
+		for _, f := range sm.onDeleteCallbacks {
+			f()
+		}
+		logp.Info("Deleting message with ID %s from SQS", *sm.Message.MessageId)
+		//return sm.SQS.DeleteMessage(sm.Message.ReceiptHandle) TODO uncomment
 	}
 	return nil
 }
@@ -95,8 +110,6 @@ func (sm *SQSMessage) EventsProcessed(c uint64) {
 
 func (sm *SQSMessage) deleteOnJobCompleted() {
 	if sm.s3objects == 0 && sm.events == 0 {
-		logp.Info("Deleting message with receipt %s from SQS", *sm.Message.ReceiptHandle)
-		// TODO: uncomment
-		//sm.Delete()
+		sm.Delete()
 	}
 }

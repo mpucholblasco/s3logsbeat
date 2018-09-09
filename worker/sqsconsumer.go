@@ -15,20 +15,24 @@ const (
 // SQSConsumerWorker is a worker to read SQS notifications for reading messages from AWS (present on
 // in channel), extract new S3 objects present on messages and pass to the output (out channel)
 type SQSConsumerWorker struct {
-	wg         sync.WaitGroup
-	in         <-chan *aws.SQS
-	out        chan<- *aws.S3ObjectSQSMessage
-	done       chan struct{}
-	doneForced chan struct{}
+	wg            sync.WaitGroup
+	in            <-chan *aws.SQS
+	out           chan<- *aws.S3ObjectSQSMessage
+	done          chan struct{}
+	doneForced    chan struct{}
+	wgSQSMessages eventCounter
+	wgS3Objects   eventCounter
 }
 
-// NewSQSConsumerWorker creates a ne SQSConsumerWorke
-func NewSQSConsumerWorker(in <-chan *aws.SQS, out chan<- *aws.S3ObjectSQSMessage) *SQSConsumerWorker {
+// NewSQSConsumerWorker creates an SQSConsumerWorker
+func NewSQSConsumerWorker(in <-chan *aws.SQS, out chan<- *aws.S3ObjectSQSMessage, wgSQSMessages eventCounter, wgS3Objects eventCounter) *SQSConsumerWorker {
 	return &SQSConsumerWorker{
-		in:         in,
-		out:        out,
-		done:       make(chan struct{}),
-		doneForced: make(chan struct{}),
+		in:            in,
+		out:           out,
+		done:          make(chan struct{}),
+		doneForced:    make(chan struct{}),
+		wgSQSMessages: wgSQSMessages,
+		wgS3Objects:   wgS3Objects,
 	}
 }
 
@@ -54,6 +58,8 @@ func (w *SQSConsumerWorker) Start() {
 							return
 						default:
 							messagesReceived, more, err := sqs.ReceiveMessages(func(message *aws.SQSMessage) error {
+								w.wgSQSMessages.Add(1)
+								message.OnDelete(func() { w.wgSQSMessages.Done() })
 								return message.ExtractNewS3Objects(
 									func(s3object *aws.S3ObjectSQSMessage) error {
 										// Using a select because w.out could be full
@@ -62,6 +68,7 @@ func (w *SQSConsumerWorker) Start() {
 											logp.Info("Cancelling ExtractNewS3Objects")
 											return fmt.Errorf("Cancelling")
 										case w.out <- s3object:
+											w.wgS3Objects.Add(1)
 										}
 										return nil
 									},
@@ -88,6 +95,11 @@ func (w *SQSConsumerWorker) StopAcceptingMessages() {
 	logp.Debug("s3logsbeat", "SQS consumers not accepting more messages")
 	w.in = nil
 	close(w.done)
+}
+
+// Wait waits until all workers have finished
+func (w *SQSConsumerWorker) Wait() {
+	w.wg.Wait()
 }
 
 // Stop sends notification to stop to workers and wait untill all workers finish
