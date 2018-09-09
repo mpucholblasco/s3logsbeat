@@ -12,20 +12,26 @@ const (
 	s3ReaderWorkers = 5
 )
 
+type eventCounter interface {
+	Add(n int)
+}
+
 // S3ReaderWorker is a worker to read objects from S3, parse their content, and send events to output
 type S3ReaderWorker struct {
-	wg   sync.WaitGroup
-	in   <-chan *aws.S3ObjectSQSMessage
-	out  beat.Client
-	done chan struct{}
+	wg       sync.WaitGroup
+	in       <-chan *aws.S3ObjectSQSMessage
+	out      beat.Client
+	done     chan struct{}
+	wgEvents eventCounter
 }
 
 // NewS3ReaderWorker creates a new S3ReaderWorker
-func NewS3ReaderWorker(in <-chan *aws.S3ObjectSQSMessage, out beat.Client) *S3ReaderWorker {
+func NewS3ReaderWorker(in <-chan *aws.S3ObjectSQSMessage, out beat.Client, wgEvents eventCounter) *S3ReaderWorker {
 	return &S3ReaderWorker{
-		in:   in,
-		out:  out,
-		done: make(chan struct{}),
+		in:       in,
+		out:      out,
+		done:     make(chan struct{}),
+		wgEvents: wgEvents,
 	}
 }
 
@@ -53,9 +59,12 @@ func (w *S3ReaderWorker) Start() {
 					}
 					defer readCloser.Close()
 					s3object.SQSMessage.SQS.Parser.Parse(readCloser, func(event beat.Event) {
-						s3object.SQSMessage.AddEvents(1)
 						event.Private = s3object.SQSMessage // store to reduce on ACK function
+						s3object.SQSMessage.AddEvents(1)
+						w.wgEvents.Add(1)
+						logp.Debug("s3logsbeat", "Before publish %d", workerId)
 						w.out.Publish(event)
+						logp.Debug("s3logsbeat", "After publish %d", workerId)
 					}, func(errLine string, err error) {
 						logp.Warn("Could not parse line: %s, reason: %+v", errLine, err)
 					})

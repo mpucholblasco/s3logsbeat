@@ -10,19 +10,18 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
+	// Used to load all available inputs
 	_ "github.com/mpucholblasco/s3logsbeat/include"
 )
 
 type Crawler struct {
 	inputs       map[uint64]*input.Runner
 	inputConfigs []*common.Config
-	//out             channel.Factory
-	wg sync.WaitGroup
-	//InputsFactory   cfgfile.RunnerFactory
-	once        bool
-	beatVersion string
-	beatDone    chan struct{}
-	chanSQS     chan *aws.SQS
+	wg           sync.WaitGroup
+	once         bool
+	beatVersion  string
+	beatDone     chan struct{}
+	chanSQS      chan *aws.SQS
 }
 
 func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, chanSQS chan *aws.SQS) (*Crawler, error) {
@@ -48,18 +47,6 @@ func (c *Crawler) Start() error {
 			return err
 		}
 	}
-
-	/*	c.InputsFactory = input.NewRunnerFactory(c.out, r, c.beatDone)
-		if configInputs.Enabled() {
-			c.inputReloader = cfgfile.NewReloader(pipeline, configInputs)
-			if err := c.inputReloader.Check(c.InputsFactory); err != nil {
-				return err
-			}
-
-			go func() {
-				c.inputReloader.Run(c.InputsFactory)
-			}()
-		}*/
 
 	logp.Info("Loading and starting Inputs completed. Enabled inputs: %v", len(c.inputs))
 

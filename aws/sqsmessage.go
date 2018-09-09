@@ -16,7 +16,7 @@ type SQSMessage struct {
 	Message *sqs.Message
 
 	// Control S3 objects to be processed and events to be acked
-	mutex     *sync.Mutex
+	mutex     sync.Mutex
 	s3objects uint64
 	events    uint64
 }

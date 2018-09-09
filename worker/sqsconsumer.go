@@ -53,7 +53,9 @@ func (w *SQSConsumerWorker) Start() {
 							messagesReceived, more, err := sqs.ReceiveMessages(func(message *aws.SQSMessage) error {
 								if err := message.ExtractNewS3Objects(
 									func(s3object *aws.S3ObjectSQSMessage) {
+										logp.Debug("asdf", "BLOQUEADO AQUI %d", workerId)
 										w.out <- s3object
+										logp.Debug("asdf", "DESBLOQUEADO AQUI %d", workerId)
 									},
 								); err != nil {
 									logp.Err("Error extracting S3 objects from event: %v", err)
@@ -81,6 +83,7 @@ func (w *SQSConsumerWorker) Start() {
 func (w *SQSConsumerWorker) Stop() {
 	logp.Debug("s3logsbeat", "Stopping SQS consumer workers")
 	close(w.done)
+	close(w.out)
 	w.wg.Wait()
 	logp.Debug("s3logsbeat", "SQS consumer workers stopped")
 }

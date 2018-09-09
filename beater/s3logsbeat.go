@@ -7,11 +7,13 @@ import (
 	"github.com/mpucholblasco/s3logsbeat/aws"
 	"github.com/mpucholblasco/s3logsbeat/config"
 	"github.com/mpucholblasco/s3logsbeat/crawler"
+	"github.com/mpucholblasco/s3logsbeat/registrar"
 	"github.com/mpucholblasco/s3logsbeat/worker"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/monitoring"
 )
 
 var (
@@ -41,9 +43,33 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	logp.Info("s3logsbeat is running! Hit CTRL-C to stop it.")
 
-	waitFinished := newSignalWait()
-
 	var err error
+
+	waitFinished := newSignalWait()
+	waitEvents := newSignalWait()
+
+	// count active events for waiting on shutdown
+	wgEvents := &eventCounter{
+		count: monitoring.NewInt(nil, "s3logsbeat.events.active"),
+		added: monitoring.NewUint(nil, "s3logsbeat.events.added"),
+		done:  monitoring.NewUint(nil, "s3logsbeat.events.done"),
+	}
+	finishedLogger := newFinishedLogger(wgEvents)
+
+	// Setup registrar to persist state
+	registrar := registrar.New(finishedLogger)
+
+	// Make sure all events that were published in
+	registrarChannel := newRegistrarLogger(registrar)
+
+	err = b.Publisher.SetACKHandler(beat.PipelineACKHandler{
+		ACKEvents: newEventACKer(registrarChannel).ackEvents,
+	})
+	if err != nil {
+		logp.Err("Failed to install the registry with the publisher pipeline: %v", err)
+		return err
+	}
+
 	bt.client, err = b.Publisher.Connect()
 	if err != nil {
 		return err
@@ -62,6 +88,9 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
+	// Start the registrar
+	registrar.Start()
+
 	err = crawler.Start()
 	if err != nil {
 		crawler.Stop()
@@ -70,7 +99,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 
 	chanS3 := make(chan *aws.S3ObjectSQSMessage, 100)
 
-	s3readerWorker := worker.NewS3ReaderWorker(chanS3, bt.client)
+	s3readerWorker := worker.NewS3ReaderWorker(chanS3, bt.client, wgEvents)
 	s3readerWorker.Start()
 
 	sqsConsumerWorker := worker.NewSQSConsumerWorker(chanSQS, chanS3)
@@ -91,30 +120,45 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitFinished.Wait()
 
 	crawler.Stop()
-	sqsConsumerWorker.Stop()
+	sqsConsumerWorker.Stop() // Do not read more SQS messages because we are closing
+
+	timeout := bt.config.ShutdownTimeout
+	// Checks if on shutdown it should wait for all events to be published
+	waitPublished := timeout > 0 || *once
+	if waitPublished {
+		logp.Debug("s3logsbeat", "AAAA")
+		// Wait for registrar to finish writing registry
+		waitEvents.Add(withLog(wgEvents.Wait,
+			"Continue shutdown: All enqueued events being published."))
+		// Wait for either timeout or all events having been ACKed by outputs.
+		if timeout > 0 {
+			logp.Info("Shutdown output timer started. Waiting for max %v.", timeout)
+			waitEvents.Add(withLog(waitDuration(timeout),
+				"Continue shutdown: Time out waiting for events being published."))
+		} else {
+			logp.Debug("s3logsbeat", "BBBB")
+			waitEvents.AddChan(bt.done)
+		}
+	}
+
+	// Wait for all events to be processed or timeout
+	logp.Debug("s3logsbeat", "Waiting for all events to be processed")
+	waitEvents.Wait()
+
+	logp.Debug("s3logsbeat", "Stopping S3 reader workers")
 	s3readerWorker.Stop()
 
-	//timeout := fb.config.ShutdownTimeout
-	// Checks if on shutdown it should wait for all events to be published
-	// waitPublished := timeout > 0 || *once
-	// if waitPublished {
-	// 	// Wait for registrar to finish writing registry
-	// 	waitEvents.Add(withLog(wgEvents.Wait,
-	// 		"Continue shutdown: All enqueued events being published."))
-	// 	// Wait for either timeout or all events having been ACKed by outputs.
-	// 	if fb.config.ShutdownTimeout > 0 {
-	// 		logp.Info("Shutdown output timer started. Waiting for max %v.", timeout)
-	// 		waitEvents.Add(withLog(waitDuration(timeout),
-	// 			"Continue shutdown: Time out waiting for events being published."))
-	// 	} else {
-	// 		waitEvents.AddChan(fb.done)
-	// 	}
-	// }
+	// Close publisher
+	bt.client.Close()
+
+	// Close registrar
+	logp.Debug("s3logsbeat", "Stopping registrar")
+	registrar.Stop()
+	registrarChannel.Close()
 
 	return nil
 }
 
 func (bt *S3logsbeat) Stop() {
-	bt.client.Close()
 	close(bt.done)
 }
