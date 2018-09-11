@@ -1,6 +1,6 @@
 // +build !integration
 
-package parser
+package logparser
 
 import (
 	"testing"
@@ -67,5 +67,5 @@ func TestS3CloudFrontWebLogParse(t *testing.T) {
 	}
 
 	errorLinesExpected := []string{}
-	AssertLogParser(t, S3CloudFrontWebLogParser, &logs, expected, errorLinesExpected)
+	assertLogParser(t, S3CloudFrontWebLogParser, &logs, expected, errorLinesExpected)
 }

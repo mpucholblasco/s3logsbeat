@@ -1,6 +1,6 @@
 // +build !integration
 
-package parser
+package logparser
 
 import (
 	"testing"
@@ -144,7 +144,7 @@ wss 2016-08-10T00:42:46.423695Z app/my-loadbalancer/50dc6c495c0c9188 10.0.0.140:
 		},
 	}
 	errorLinesExpected := []string{}
-	AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
+	assertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
 }
 
 func TestS3ALBLogParserStrangeEntries(t *testing.T) {
@@ -168,5 +168,5 @@ func TestS3ALBLogParserStrangeEntries(t *testing.T) {
 		},
 	}
 	errorLinesExpected := []string{}
-	AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
+	assertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
 }

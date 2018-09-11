@@ -10,7 +10,6 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/mpucholblasco/s3logsbeat/aws"
-	"github.com/mpucholblasco/s3logsbeat/parser"
 )
 
 func TestGetKeyFields(t *testing.T) {
@@ -29,5 +28,5 @@ func TestGetKeyFields(t *testing.T) {
 	}
 
 	assert.NoError(t, err)
-	parser.AssertEventFields(t, expectedKeyFields, *keyFields)
+	assert.Equal(t, expectedKeyFields, *keyFields)
 }

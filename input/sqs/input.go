@@ -3,7 +3,7 @@ package log
 import (
 	"github.com/mpucholblasco/s3logsbeat/aws"
 	"github.com/mpucholblasco/s3logsbeat/input"
-	"github.com/mpucholblasco/s3logsbeat/parser"
+	"github.com/mpucholblasco/s3logsbeat/logparser"
 	"github.com/mpucholblasco/s3logsbeat/pipeline"
 
 	"github.com/elastic/beats/libbeat/common"
@@ -23,7 +23,7 @@ type Input struct {
 	config    config
 	done      chan struct{}
 	out       chan *pipeline.SQS
-	logParser parser.LogParser
+	logParser logparser.LogParser
 }
 
 // NewInput instantiates a new Log
@@ -43,7 +43,7 @@ func NewInput(
 	}
 
 	var err error
-	p.logParser, err = parser.GetPredefinedParser(p.config.LogFormat)
+	p.logParser, err = logparser.GetPredefinedParser(p.config.LogFormat)
 	if err != nil {
 		return nil, err
 	}

@@ -1,11 +1,13 @@
 // +build !integration
 
-package parser
+package logparser
 
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,7 +70,7 @@ func TestCustomLogParserParseSingleLine(t *testing.T) {
 		},
 	)
 	expectedErrorsPrefix := []string{}
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
@@ -92,7 +94,7 @@ func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
 	expectedErrorsPrefix := []string{}
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
@@ -120,7 +122,7 @@ func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
 
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind).WithEmptyValues(emptyValues)
 	expectedErrorsPrefix := []string{}
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseSingleLineWithConditionals(t *testing.T) {
@@ -169,7 +171,7 @@ str3 2019-12-18T23:09:45.945958Z 59 -
 
 	parser := NewCustomLogParser("time", r).WithKindMap(km)
 	expectedErrorsPrefix := []string{}
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseMultipleLines(t *testing.T) {
@@ -223,7 +225,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
 	expectedErrorsPrefix := []string{}
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseMultipleLinesWithIgnoredLines(t *testing.T) {
@@ -285,7 +287,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind).WithReIgnore(regexp.MustCompile(`^\s*#`))
 	expectedErrorsPrefix := []string{}
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserParseErrorLines(t *testing.T) {
@@ -296,7 +298,7 @@ func TestCustomLogParserParseErrorLines(t *testing.T) {
 	}
 
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserInvalidFormat(t *testing.T) {
@@ -325,7 +327,7 @@ Incorrect line2
 	}
 
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
-	AssertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
+	assertLogParser(t, parser, &logs, expected, expectedErrorsPrefix)
 }
 
 func TestCustomLogParserNothingProcessedOnReaderError(t *testing.T) {
@@ -348,4 +350,51 @@ type testReader struct {
 
 func (a *testReader) Read(p []byte) (int, error) {
 	return 0, fmt.Errorf("my custom error")
+}
+
+func assertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []*beat.Event, expectedErrorsPrefix []string) {
+	results := make([]*beat.Event, 0, len(expectedEvents))
+	errors := make([]error, 0, len(expectedErrorsPrefix))
+	err := p.Parse(strings.NewReader(*logs), func(event *beat.Event) {
+		results = append(results, event)
+	}, func(errLine string, err error) {
+		errors = append(errors, err)
+	})
+	assert.NoError(t, err)
+	assert.Len(t, errors, len(expectedErrorsPrefix))
+	assert.Len(t, results, len(expectedEvents))
+	for idx, expEvent := range expectedEvents {
+		resultEvent := results[idx]
+		assertEventFields(t, expEvent.Fields, resultEvent.Fields)
+		assert.Equal(t, expEvent.Timestamp, resultEvent.Timestamp)
+	}
+	for idx, expErr := range expectedErrorsPrefix {
+		err := errors[idx]
+		if !assert.True(t, strings.HasPrefix(err.Error(), expErr)) {
+			t.Logf("expected error prefix: %s", expErr)
+			t.Logf("      but found error: %s", err.Error())
+			t.Logf("------------------------------")
+		}
+	}
+}
+
+func assertEventFields(t *testing.T, expected, event common.MapStr) {
+	for field, exp := range expected {
+		val, found := event[field]
+		if !found {
+			t.Errorf("Missing field: %v", field)
+			continue
+		}
+
+		if sub, ok := exp.(common.MapStr); ok {
+			assertEventFields(t, sub, val.(common.MapStr))
+		} else {
+			if !assert.Equal(t, exp, val) {
+				t.Logf("failed in field: %v", field)
+				t.Logf("type expected: %v", reflect.TypeOf(exp))
+				t.Logf("type event: %v", reflect.TypeOf(val))
+				t.Logf("------------------------------")
+			}
+		}
+	}
 }
