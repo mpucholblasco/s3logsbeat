@@ -78,7 +78,13 @@ func (s *SQSMessage) deleteOnJobCompleted() {
 }
 
 func (s *SQSMessage) delete() {
-	//sm.sqs.DeleteMessage(sm.ReceiptHandle) TODO uncomment on final version
+	// TODO: uncomment on final release
+	// if err := s.sqs.DeleteMessage(s.ReceiptHandle); err != nil {
+	// 	logp.Err("Couldn't delete SQS message with ID %s. Error: %v", s.MessageId, err)
+	// }
+	for _, c := range s.onDeleteCallbacks {
+		c()
+	}
 }
 
 // ExtractNewS3Objects extracts those new S3 objects present on an SQS message
