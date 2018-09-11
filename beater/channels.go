@@ -21,6 +21,7 @@ type eventCounter struct {
 	added *monitoring.Uint
 	done  *monitoring.Uint
 	count *monitoring.Int
+	err   *monitoring.Uint
 	wg    sync.WaitGroup
 }
 
@@ -60,6 +61,10 @@ func (c *eventCounter) Add(delta int) {
 	c.count.Add(int64(delta))
 	c.added.Add(uint64(delta))
 	c.wg.Add(delta)
+}
+
+func (c *eventCounter) Error(n uint64) {
+	c.err.Add(n)
 }
 
 func (c *eventCounter) Done() {

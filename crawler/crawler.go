@@ -14,6 +14,7 @@ import (
 	_ "github.com/mpucholblasco/s3logsbeat/include"
 )
 
+// Crawler object
 type Crawler struct {
 	inputs       map[uint64]*input.Runner
 	inputConfigs []*common.Config
@@ -24,9 +25,9 @@ type Crawler struct {
 	chanSQS      chan *aws.SQS
 }
 
+// New creates a new crawler
 func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, chanSQS chan *aws.SQS) (*Crawler, error) {
 	return &Crawler{
-		//out:          out,
 		inputs:       map[uint64]*input.Runner{},
 		inputConfigs: inputConfigs,
 		once:         once,
@@ -38,7 +39,6 @@ func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct
 
 // Start starts the crawler with all inputs
 func (c *Crawler) Start() error {
-
 	logp.Info("Loading Inputs: %v", len(c.inputConfigs))
 
 	for _, inputConfig := range c.inputConfigs {
@@ -78,28 +78,25 @@ func (c *Crawler) startInput(
 	return nil
 }
 
+// Stop stops all inputs in parallel and waits until all them will be stopped
 func (c *Crawler) Stop() {
 	logp.Info("Stopping Crawler")
-
-	asyncWaitStop := func(stop func()) {
-		c.wg.Add(1)
-		go func() {
-			defer c.wg.Done()
-			stop()
-		}()
-	}
 
 	logp.Info("Stopping %v inputs", len(c.inputs))
 	for _, p := range c.inputs {
 		// Stop inputs in parallel
-		asyncWaitStop(p.Stop)
+		c.wg.Add(1)
+		go func() {
+			defer c.wg.Done()
+			p.Stop()
+		}()
 	}
-
-	c.WaitForCompletion()
+	c.wg.Wait()
 
 	logp.Info("Crawler stopped")
 }
 
+// WaitForCompletion waits untill all inputs will be stopped
 func (c *Crawler) WaitForCompletion() {
 	c.wg.Wait()
 }

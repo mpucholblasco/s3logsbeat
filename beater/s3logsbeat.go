@@ -53,6 +53,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		count: monitoring.NewInt(nil, "s3logsbeat.sqsMessages.active"),
 		added: monitoring.NewUint(nil, "s3logsbeat.sqsMessages.added"),
 		done:  monitoring.NewUint(nil, "s3logsbeat.sqsMessages.done"),
+		err:   monitoring.NewUint(nil, "s3logsbeat.sqsMessages.pullError"),
 	}
 
 	// count S3 objects for monitoring purposes
@@ -60,6 +61,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		count: monitoring.NewInt(nil, "s3logsbeat.s3objects.active"),
 		added: monitoring.NewUint(nil, "s3logsbeat.s3objects.added"),
 		done:  monitoring.NewUint(nil, "s3logsbeat.s3objects.done"),
+		err:   monitoring.NewUint(nil, "s3logsbeat.s3object.readError"),
 	}
 
 	// count active events for waiting on shutdown
@@ -67,6 +69,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		count: monitoring.NewInt(nil, "s3logsbeat.events.active"),
 		added: monitoring.NewUint(nil, "s3logsbeat.events.added"),
 		done:  monitoring.NewUint(nil, "s3logsbeat.events.done"),
+		err:   monitoring.NewUint(nil, "s3logsbeat.events.parserError"),
 	}
 	finishedLogger := newFinishedLogger(wgEvents)
 
@@ -163,7 +166,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitEvents.Wait()
 
 	sqsConsumerWorker.Stop()
-	bt.client.Close()
+	bt.client.Close() // unlock publish events (if blocked)
 	s3readerWorker.Stop()
 
 	// Close registrar

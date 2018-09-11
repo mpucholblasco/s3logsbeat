@@ -45,8 +45,8 @@ func TestIsLineIgnored(t *testing.T) {
 // Parse tests
 func TestCustomLogParserParseSingleLine(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353`
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "2db0da2449bcdbf8f1838844107a490f2773e09e",
@@ -73,8 +73,8 @@ func TestCustomLogParserParseSingleLine(t *testing.T) {
 
 func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353`
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "2db0da2449bcdbf8f1838844107a490f2773e09e",
@@ -97,8 +97,8 @@ func TestCustomLogParserParseSingleLineWithKindMap(t *testing.T) {
 
 func TestCustomLogParserParseSingleLineWithEmtpyValues(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z - 120 30123 true str2 - 0.0318353`
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "0c2f4767adbc506b33eb9fd8dc7ad47bf18dfb50",
@@ -136,8 +136,8 @@ func TestCustomLogParserParseSingleLineWithConditionals(t *testing.T) {
 str2 2017-12-18T23:09:45.945958Z 58 - 45678
 str3 2019-12-18T23:09:45.945958Z 59 -
 `
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":         "6d7a371b5bd42f8240106580733ec63e397db158",
@@ -148,7 +148,7 @@ str3 2019-12-18T23:09:45.945958Z 59 -
 				"intopt":      int(4567),
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2017, 12, 18, 23, 9, 45, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":    "e6657a85ed4f1e9e7c280815af782166c0bbe4bf",
@@ -157,7 +157,7 @@ str3 2019-12-18T23:09:45.945958Z 59 -
 				"intopt": int(45678),
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2019, 12, 18, 23, 9, 45, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":    "fdd3dd82bce86471e109171626105a34e0f4f798",
@@ -176,8 +176,8 @@ func TestCustomLogParserParseMultipleLines(t *testing.T) {
 	logs := `str1 2016-08-10T22:08:42.945958Z 35325 120 30123 true str2 0.325 0.0318353
 strLine2 2018-07-15T21:18:47.483845Z 321345 25 27535 false str2Line2 0.312 0.323454555
 strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "4fa1020dbfc28237c745009a6e13c87fd8546e91",
@@ -191,7 +191,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 				"float64": 0.0318353,
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "bf63b2f1b77a4ef54ed707b9d4eca8006e0049d2",
@@ -205,7 +205,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456`
 				"float64": 0.323454555,
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "69feaceba421db7b52f65815422fb5abc55d6e37",
@@ -238,8 +238,8 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 
 `
 
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2016, 8, 10, 22, 8, 42, 945958000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "4fa1020dbfc28237c745009a6e13c87fd8546e91",
@@ -253,7 +253,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 				"float64": 0.0318353,
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "bf63b2f1b77a4ef54ed707b9d4eca8006e0049d2",
@@ -267,7 +267,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 				"float64": 0.323454555,
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2006, 8, 13, 2, 8, 12, 544953000, time.UTC),
 			Fields: common.MapStr{
 				"_id":     "a9ffb794f6ead3fca7d4a98c58784ade15608430",
@@ -290,7 +290,7 @@ strLine3 2006-08-13T02:08:12.544953Z 12345 05 31123 true str2 0.111 0.123456
 
 func TestCustomLogParserParseErrorLines(t *testing.T) {
 	logs := `str1 not-a-valid-date 35325 120 30123 true str2 0.325 0.0318353`
-	expected := []beat.Event{}
+	expected := []*beat.Event{}
 	expectedErrorsPrefix := []string{
 		`Couldn't parse field (time) to type (timeISO8601). Error: parsing time "not-a-valid-date"`,
 	}
@@ -304,8 +304,8 @@ func TestCustomLogParserInvalidFormat(t *testing.T) {
 strLine2 2018-07-15T21:18:47.483845Z 321345 25 27535 false str2Line2 0.312 0.323454555
 Incorrect line2
 `
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2018, 7, 15, 21, 18, 47, 483845000, time.UTC),
 			Fields: common.MapStr{
 				"string":  "strLine2",
@@ -332,7 +332,7 @@ func TestCustomLogParserNothingProcessedOnReaderError(t *testing.T) {
 	ok := 0
 	ko := 0
 	parser := NewCustomLogParser("time", regexTest).WithKindMap(regexKind)
-	err := parser.Parse(&testReader{}, func(event beat.Event) {
+	err := parser.Parse(&testReader{}, func(event *beat.Event) {
 		ok++
 	}, func(errLine string, err error) {
 		ko++

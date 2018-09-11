@@ -12,10 +12,10 @@ import (
 
 // AssertLogParser asserts that expectedEvents and expectedErrorsPrefix are equal to the obtained one when
 // parsing logs
-func AssertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []beat.Event, expectedErrorsPrefix []string) {
-	results := make([]beat.Event, 0, len(expectedEvents))
+func AssertLogParser(t *testing.T, p LogParser, logs *string, expectedEvents []*beat.Event, expectedErrorsPrefix []string) {
+	results := make([]*beat.Event, 0, len(expectedEvents))
 	errors := make([]error, 0, len(expectedErrorsPrefix))
-	err := p.Parse(strings.NewReader(*logs), func(event beat.Event) {
+	err := p.Parse(strings.NewReader(*logs), func(event *beat.Event) {
 		results = append(results, event)
 	}, func(errLine string, err error) {
 		errors = append(errors, err)

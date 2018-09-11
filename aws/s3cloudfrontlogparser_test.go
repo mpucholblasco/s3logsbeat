@@ -17,8 +17,8 @@ func TestS3CloudFrontWebLogParse(t *testing.T) {
 #Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header cs-protocol cs-bytes time-taken x-forwarded-for ssl-protocol ssl-cipher x-edge-response-result-type cs-protocol-version fle-status fle-encrypted-fields
 2014-05-23	01:13:11	FRA2	182	192.0.2.10	GET	d111111abcdef8.cloudfront.net	/view/my/file.html	200	www.displaymyfiles.com	Mozilla/4.0%20(compatible;%20MSIE%205.0b1;%20Mac_PowerPC)	-	zip=98101	RefreshHit	MRVMF7KydIvxMWfJIglgwHQwZsbG2IhRJ07sn9AkKUFSHS9EXAMPLE==	d111111abcdef8.cloudfront.net	http	-	0.001	-	-	-	RefreshHit	HTTP/1.1	Processed	1
 2014-05-23	01:13:12	LAX1	2390282	192.0.2.202	GET	d111111abcdef8.cloudfront.net	/soundtrack/happy.mp3	304	www.unknownsingers.com	Mozilla/4.0%20(compatible;%20MSIE%207.0;%20Windows%20NT%205.1)	a=b&c=d	zip=50158	Hit	xGN7KWpVEmB9Dp7ctcVFQC4E-nrcOcEKS3QyAez--06dV7TEXAMPLE==	d111111abcdef8.cloudfront.net	http	-	0.002	-	-	-	Hit	HTTP/1.1	-	-`
-	expected := []beat.Event{
-		beat.Event{
+	expected := []*beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2014, 5, 23, 1, 13, 11, 0, time.UTC),
 			Fields: common.MapStr{
 				"x_edge_location":             "FRA2",
@@ -42,7 +42,7 @@ func TestS3CloudFrontWebLogParse(t *testing.T) {
 				"fle_encrypted_fields":        "1",
 			},
 		},
-		beat.Event{
+		&beat.Event{
 			Timestamp: time.Date(2014, 5, 23, 1, 13, 12, 0, time.UTC),
 			Fields: common.MapStr{
 				"x_edge_location":             "LAX1",

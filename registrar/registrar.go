@@ -66,4 +66,5 @@ func (r *Registrar) Stop() {
 	logp.Info("Stopping Registrar")
 	close(r.done)
 	r.wg.Wait()
+	logp.Info("Registrar stopped")
 }

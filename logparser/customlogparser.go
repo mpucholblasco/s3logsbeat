@@ -79,7 +79,7 @@ func (c *CustomLogParser) WithEmptyValues(emptyValues map[string]string) *Custom
 }
 
 // Parse parses a reader and sends errors and parsed elements to handlers
-func (c *CustomLogParser) Parse(reader io.Reader, mh func(beat.Event), eh func(string, error)) error {
+func (c *CustomLogParser) Parse(reader io.Reader, mh func(*beat.Event), eh func(string, error)) error {
 	r := bufio.NewReader(reader)
 	re := c.re.Copy()
 	var reIgnore *regexp.Regexp
@@ -127,7 +127,7 @@ LINE_READER:
 				h := sha1.New()
 				io.WriteString(h, line)
 				fields["_id"] = hex.EncodeToString(h.Sum(nil))
-				event := beat.Event{
+				event := &beat.Event{
 					Timestamp: timestamp,
 					Fields:    fields,
 				}

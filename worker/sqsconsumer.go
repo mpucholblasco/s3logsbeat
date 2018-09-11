@@ -36,57 +36,69 @@ func NewSQSConsumerWorker(in <-chan *aws.SQS, out chan<- *aws.S3ObjectSQSMessage
 	}
 }
 
-// Start starts the SQSConsumerWorker
+// Start starts the SQS consumer workers
 func (w *SQSConsumerWorker) Start() {
+	w.wg.Add(sqsConsumerWorkers)
 	for n := 0; n < sqsConsumerWorkers; n++ {
-		w.wg.Add(1)
-		go func(workerId int) {
+		go func(workerID int) {
 			defer w.wg.Done()
-			logp.Info("SQS consumer worker #%d : waiting for input data", workerId)
-		INPUT_LOOP:
+			logp.Info("SQS consumer worker #%d : waiting for input data", workerID)
 			for {
 				select {
 				case <-w.done:
-					logp.Info("SQS consumer worker #%d finished", workerId)
+					logp.Info("SQS consumer worker #%d finished", workerID)
 					return
 				case sqs := <-w.in:
-					logp.Debug("s3logsbeat", "Reading SQS messages from queue: %s", sqs.String())
-					for {
-						select {
-						case <-w.done:
-							logp.Info("SQS consumer worker #%d finished", workerId)
-							return
-						default:
-							messagesReceived, more, err := sqs.ReceiveMessages(func(message *aws.SQSMessage) error {
-								w.wgSQSMessages.Add(1)
-								message.OnDelete(func() { w.wgSQSMessages.Done() })
-								return message.ExtractNewS3Objects(
-									func(s3object *aws.S3ObjectSQSMessage) error {
-										// Using a select because w.out could be full
-										select {
-										case <-w.doneForced:
-											logp.Info("Cancelling ExtractNewS3Objects")
-											return fmt.Errorf("Cancelling")
-										case w.out <- s3object:
-											w.wgS3Objects.Add(1)
-										}
-										return nil
-									},
-								)
-							})
-							if err != nil {
-								logp.Err("Could not receive SQS messages: %v", err)
-								continue INPUT_LOOP
-							}
-							if !more {
-								continue INPUT_LOOP
-							}
-							logp.Debug("s3logsbeat", "Received %d messages from SQS queue", messagesReceived)
-						}
-					}
+					w.onSQSNotification(workerID, sqs)
 				}
 			}
 		}(n)
+	}
+}
+
+// Reads SQS messages from SQS queue until empty or AWS returns less than
+// maximum
+func (w *SQSConsumerWorker) onSQSNotification(workerID int, sqs *aws.SQS) {
+	logp.Debug("s3logsbeat", "Reading SQS messages from queue: %s", sqs.String())
+	var messagesReceived int
+	var err error
+	more := true
+
+	onNewS3Object := func(s3object *aws.S3ObjectSQSMessage) error {
+		// Using a select because w.out could be full
+		select {
+		case <-w.doneForced:
+			logp.Info("Cancelling ExtractNewS3Objects")
+			return fmt.Errorf("Cancelling")
+		case w.out <- s3object:
+			w.wgS3Objects.Add(1)
+		}
+		return nil
+	}
+
+	onSQSMessage := func(message *aws.SQSMessage) error {
+		// Monitoring
+		w.wgSQSMessages.Add(1)
+		message.OnDelete(func() { w.wgSQSMessages.Done() })
+
+		// Extract new S3 objects from SQS message
+		return message.ExtractNewS3Objects(onNewS3Object)
+	}
+
+	for more {
+		// Avoid reading more SQS messages on stop
+		select {
+		case <-w.done:
+			return
+		default:
+			if messagesReceived, more, err = sqs.ReceiveMessages(onSQSMessage); err != nil {
+				w.wgSQSMessages.Error(1)
+				logp.Err("Could not receive SQS messages: %v", err)
+				// more is false when err != nil -> exiting from loop
+			} else {
+				logp.Debug("s3logsbeat", "Received %d messages from SQS queue", messagesReceived)
+			}
+		}
 	}
 }
 
