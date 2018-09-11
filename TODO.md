@@ -9,10 +9,9 @@ Improvements
 [KO] Do not pull from SQS if output is down -> couldn't find a way to do it because of library.
 [x] Add information to monitor
 [x] Add failures to monitor
-[ ] Add key fields to events
+[x] Add key fields to events
 [ ] Test Once
 [ ] Change fields (name and similar) based on config
-[ ] Refactor SQS because I'm adding too much configuration on this queue -> pass it to children?
 
 Features
 [ ] Only one AWS credentials used
