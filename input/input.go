@@ -7,7 +7,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
 
 	"github.com/mitchellh/hashstructure"
 )
@@ -28,14 +28,14 @@ type Runner struct {
 	ID       uint64
 	Once     bool
 	beatDone chan struct{}
-	chanSQS  chan *aws.SQS
+	out      chan *pipeline.SQS
 }
 
 // New instantiates a new Runner
 func New(
 	conf *common.Config,
 	beatDone chan struct{},
-	chanSQS chan *aws.SQS,
+	out chan *pipeline.SQS,
 ) (*Runner, error) {
 	input := &Runner{
 		config:   defaultConfig,
@@ -43,7 +43,7 @@ func New(
 		done:     make(chan struct{}),
 		Once:     false,
 		beatDone: beatDone,
-		chanSQS:  chanSQS,
+		out:      out,
 	}
 
 	var err error
@@ -67,7 +67,7 @@ func New(
 	context := Context{
 		Done:     input.done,
 		BeatDone: input.beatDone,
-		ChanSQS:  input.chanSQS,
+		Out:      input.out,
 	}
 	var ipt Input
 	ipt, err = f(conf, context)

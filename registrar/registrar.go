@@ -4,11 +4,11 @@ import (
 	"sync"
 
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
 )
 
 type Registrar struct {
-	Channel chan []*aws.SQSMessage
+	Channel chan []*pipeline.SQSMessage
 	out     successLogger
 	done    chan struct{}
 	wg      sync.WaitGroup
@@ -21,7 +21,7 @@ type successLogger interface {
 func New(out successLogger) *Registrar {
 	return &Registrar{
 		done:    make(chan struct{}),
-		Channel: make(chan []*aws.SQSMessage, 1),
+		Channel: make(chan []*pipeline.SQSMessage, 1),
 		out:     out,
 		wg:      sync.WaitGroup{},
 	}
@@ -51,7 +51,7 @@ func (r *Registrar) Run() {
 }
 
 // onEvents processes events received from the publisher pipeline
-func (r *Registrar) onEvents(states []*aws.SQSMessage) {
+func (r *Registrar) onEvents(states []*pipeline.SQSMessage) {
 	logp.Debug("registrar", "Processing %d events", len(states))
 
 	for _, s := range states {

@@ -4,13 +4,13 @@ import (
 	"sync"
 
 	"github.com/elastic/beats/libbeat/monitoring"
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
 	"github.com/mpucholblasco/s3logsbeat/registrar"
 )
 
 type registrarLogger struct {
 	done chan struct{}
-	ch   chan<- []*aws.SQSMessage
+	ch   chan<- []*pipeline.SQSMessage
 }
 
 type finishedLogger struct {
@@ -34,7 +34,7 @@ func newRegistrarLogger(reg *registrar.Registrar) *registrarLogger {
 
 func (l *registrarLogger) Close() { close(l.done) }
 
-func (l *registrarLogger) Published(sqsMessages []*aws.SQSMessage) {
+func (l *registrarLogger) Published(sqsMessages []*pipeline.SQSMessage) {
 	select {
 	case <-l.done:
 		// set ch to nil, so no more events will be send after channel close signal

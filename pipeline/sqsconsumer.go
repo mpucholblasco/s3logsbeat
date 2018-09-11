@@ -1,4 +1,4 @@
-package worker
+package pipeline
 
 import (
 	"fmt"
@@ -16,8 +16,8 @@ const (
 // in channel), extract new S3 objects present on messages and pass to the output (out channel)
 type SQSConsumerWorker struct {
 	wg            sync.WaitGroup
-	in            <-chan *aws.SQS
-	out           chan<- *aws.S3ObjectSQSMessage
+	in            <-chan *SQS
+	out           chan<- *S3Object
 	done          chan struct{}
 	doneForced    chan struct{}
 	wgSQSMessages eventCounter
@@ -25,7 +25,7 @@ type SQSConsumerWorker struct {
 }
 
 // NewSQSConsumerWorker creates an SQSConsumerWorker
-func NewSQSConsumerWorker(in <-chan *aws.SQS, out chan<- *aws.S3ObjectSQSMessage, wgSQSMessages eventCounter, wgS3Objects eventCounter) *SQSConsumerWorker {
+func NewSQSConsumerWorker(in <-chan *SQS, out chan<- *S3Object, wgSQSMessages eventCounter, wgS3Objects eventCounter) *SQSConsumerWorker {
 	return &SQSConsumerWorker{
 		in:            in,
 		out:           out,
@@ -58,13 +58,13 @@ func (w *SQSConsumerWorker) Start() {
 
 // Reads SQS messages from SQS queue until empty or AWS returns less than
 // maximum
-func (w *SQSConsumerWorker) onSQSNotification(workerID int, sqs *aws.SQS) {
+func (w *SQSConsumerWorker) onSQSNotification(workerID int, sqs *SQS) {
 	logp.Debug("s3logsbeat", "Reading SQS messages from queue: %s", sqs.String())
 	var messagesReceived int
 	var err error
 	more := true
 
-	onNewS3Object := func(s3object *aws.S3ObjectSQSMessage) error {
+	onNewS3Object := func(s3object *S3Object) error {
 		// Using a select because w.out could be full
 		select {
 		case <-w.doneForced:
@@ -79,10 +79,11 @@ func (w *SQSConsumerWorker) onSQSNotification(workerID int, sqs *aws.SQS) {
 	onSQSMessage := func(message *aws.SQSMessage) error {
 		// Monitoring
 		w.wgSQSMessages.Add(1)
-		message.OnDelete(func() { w.wgSQSMessages.Done() })
+		m := NewSQSMessage(sqs, message)
+		m.OnDelete(func() { w.wgSQSMessages.Done() })
 
 		// Extract new S3 objects from SQS message
-		return message.ExtractNewS3Objects(onNewS3Object)
+		return m.ExtractNewS3Objects(onNewS3Object)
 	}
 
 	for more {

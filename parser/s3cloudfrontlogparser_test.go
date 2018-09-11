@@ -1,6 +1,6 @@
 // +build !integration
 
-package aws
+package parser
 
 import (
 	"testing"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/mpucholblasco/s3logsbeat/logparser"
 )
 
 // Examples present here have been obtained from: https://docs.aws.amazon.com/es_es/elasticloadbalancing/latest/application/load-balancer-access-logs.html
@@ -68,5 +67,5 @@ func TestS3CloudFrontWebLogParse(t *testing.T) {
 	}
 
 	errorLinesExpected := []string{}
-	logparser.AssertLogParser(t, S3CloudFrontWebLogParser, &logs, expected, errorLinesExpected)
+	AssertLogParser(t, S3CloudFrontWebLogParser, &logs, expected, errorLinesExpected)
 }

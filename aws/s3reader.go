@@ -34,15 +34,15 @@ func NewS3(session *session.Session) *S3 {
 }
 
 // GetReadCloser returns a io.ReadCloser to be readed (and then closed) by another method.
-func (s *S3) GetReadCloser(bucket string, key string) (io.ReadCloser, error) {
+func (s *S3) GetReadCloser(o *S3Object) (io.ReadCloser, error) {
 	output, err := s.client.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+		Bucket: aws.String(o.Bucket),
+		Key:    aws.String(o.Key),
 	})
 	if err != nil {
 		return nil, err
 	}
-	return newS3ReadCloser(output.Body, key)
+	return newS3ReadCloser(output.Body, o.Key)
 }
 
 func newS3ReadCloser(i io.ReadCloser, key string) (io.ReadCloser, error) {

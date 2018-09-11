@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/mpucholblasco/s3logsbeat/logparser"
 )
 
 const (
@@ -17,23 +16,17 @@ const (
 type SQS struct {
 	client *sqs.SQS
 	url    *string
-	Parser logparser.LogParser
 }
 
 type sqsMessageHandler func(*SQSMessage) error
 
 // NewSQS is a construct function for creating the object
 // with session and url of the queue as arguments
-func NewSQS(session *session.Session, queueURL *string, parser logparser.LogParser) *SQS {
-	client := sqs.New(session)
-
-	sqs := &SQS{
-		client: client,
+func NewSQS(session *session.Session, queueURL *string) *SQS {
+	return &SQS{
+		client: sqs.New(session),
 		url:    queueURL,
-		Parser: parser,
 	}
-
-	return sqs
 }
 
 // ReceiveMessages receives messages from queue and executes message handler for each message
@@ -58,8 +51,8 @@ func (s *SQS) ReceiveMessages(mh sqsMessageHandler) (int, bool, error) {
 	}
 
 	received += len(resp.Messages)
-	for i := range resp.Messages {
-		if err := mh(NewSQSMessage(s, resp.Messages[i])); err != nil {
+	for _, m := range resp.Messages {
+		if err := mh(newSQSMessage(m)); err != nil {
 			return 0, false, err
 		}
 	}

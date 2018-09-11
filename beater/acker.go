@@ -1,7 +1,7 @@
 package beater
 
 import (
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
 )
 
 // eventAcker handles publisher pipeline ACKs and forwards
@@ -11,7 +11,7 @@ type eventACKer struct {
 }
 
 type successLogger interface {
-	Published(sqsMessages []*aws.SQSMessage)
+	Published(sqsMessages []*pipeline.SQSMessage)
 }
 
 func newEventACKer(out successLogger) *eventACKer {
@@ -19,13 +19,13 @@ func newEventACKer(out successLogger) *eventACKer {
 }
 
 func (a *eventACKer) ackEvents(data []interface{}) {
-	states := make([]*aws.SQSMessage, 0, len(data))
+	states := make([]*pipeline.SQSMessage, 0, len(data))
 	for _, datum := range data {
 		if datum == nil {
 			continue
 		}
 
-		st, ok := datum.(*aws.SQSMessage)
+		st, ok := datum.(*pipeline.SQSMessage)
 		if !ok {
 			continue
 		}

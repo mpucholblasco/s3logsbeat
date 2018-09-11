@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mpucholblasco/s3logsbeat/aws"
 	"github.com/mpucholblasco/s3logsbeat/input"
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
@@ -22,18 +22,18 @@ type Crawler struct {
 	once         bool
 	beatVersion  string
 	beatDone     chan struct{}
-	chanSQS      chan *aws.SQS
+	out          chan *pipeline.SQS
 }
 
 // New creates a new crawler
-func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, chanSQS chan *aws.SQS) (*Crawler, error) {
+func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, out chan *pipeline.SQS) (*Crawler, error) {
 	return &Crawler{
 		inputs:       map[uint64]*input.Runner{},
 		inputConfigs: inputConfigs,
 		once:         once,
 		beatVersion:  beatVersion,
 		beatDone:     beatDone,
-		chanSQS:      chanSQS,
+		out:          out,
 	}, nil
 }
 
@@ -60,8 +60,7 @@ func (c *Crawler) startInput(
 		return nil
 	}
 
-	//connector := channel.ConnectTo(pipeline, c.out)
-	p, err := input.New(config, c.beatDone, c.chanSQS)
+	p, err := input.New(config, c.beatDone, c.out)
 	if err != nil {
 		return fmt.Errorf("Error in initing input: %s", err)
 	}

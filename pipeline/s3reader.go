@@ -1,4 +1,4 @@
-package worker
+package pipeline
 
 import (
 	"sync"
@@ -21,7 +21,7 @@ type eventCounter interface {
 // S3ReaderWorker is a worker to read objects from S3, parse their content, and send events to output
 type S3ReaderWorker struct {
 	wg          sync.WaitGroup
-	in          <-chan *aws.S3ObjectSQSMessage
+	in          <-chan *S3Object
 	out         beat.Client
 	done        chan struct{}
 	wgEvents    eventCounter
@@ -29,7 +29,7 @@ type S3ReaderWorker struct {
 }
 
 // NewS3ReaderWorker creates a new S3ReaderWorker
-func NewS3ReaderWorker(in <-chan *aws.S3ObjectSQSMessage, out beat.Client, wgEvents eventCounter, wgS3Objects eventCounter) *S3ReaderWorker {
+func NewS3ReaderWorker(in <-chan *S3Object, out beat.Client, wgEvents eventCounter, wgS3Objects eventCounter) *S3ReaderWorker {
 	return &S3ReaderWorker{
 		in:          in,
 		out:         out,
@@ -65,12 +65,18 @@ func (w *S3ReaderWorker) Start() {
 	}
 }
 
-func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *aws.S3ObjectSQSMessage) {
-	onLogParserSucceed := func(event beat.Event) {
-		event.Private = s3object.SQSMessage // store to reduce on ACK function
-		s3object.SQSMessage.AddEvents(1)
+func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *S3Object) {
+	keyFields, err := s3object.GetKeyFields()
+	if err != nil {
+		logp.Warn("Get key fields error. Ignoring. Error: %v", err)
+	}
+
+	onLogParserSucceed := func(event *beat.Event) {
+		event.Private = s3object.sqsMessage // store to reduce on ACK function
+		event.Fields.Update(*keyFields)
+		s3object.sqsMessage.AddEvents(1)
 		w.wgEvents.Add(1)
-		w.out.Publish(event)
+		w.out.Publish(*event)
 	}
 
 	onLogParserError := func(errLine string, err error) {
@@ -78,20 +84,20 @@ func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *aws.S3Ob
 		logp.Warn("Could not parse line: %s, reason: %+v", errLine, err)
 	}
 
-	logp.Debug("s3logsbeat", "Reading S3 object from region=%s, bucket=%s, key=%s", s3object.Region, s3object.S3Bucket, s3object.S3Key)
-	if readCloser, err := s3.GetReadCloser(s3object.S3Bucket, s3object.S3Key); err != nil {
+	logp.Debug("s3logsbeat", "Reading S3 object %s", s3object.String())
+	if readCloser, err := s3.GetReadCloser(s3object.S3Object); err != nil {
 		w.wgS3Objects.Error(1)
-		logp.Err("Could not download S3 object from region=%s, bucket=%s, key=%s", s3object.Region, s3object.S3Bucket, s3object.S3Key)
+		logp.Err("Could not download S3 object %s", s3object.String())
 	} else {
 		defer readCloser.Close()
-		s3object.SQSMessage.SQS.Parser.Parse(readCloser, onLogParserSucceed, onLogParserError)
+		s3object.sqsMessage.sqs.logParser.Parse(readCloser, onLogParserSucceed, onLogParserError)
 	}
 
 	// Monitoring
 	w.wgS3Objects.Done()
 
 	// Counting how much remaining events are on this SQS message to delete it when all will be processed
-	s3object.SQSMessage.S3ObjectProcessed()
+	s3object.sqsMessage.S3ObjectProcessed()
 }
 
 // Wait waits until all workers have finished

@@ -1,6 +1,6 @@
 // +build !integration
 
-package aws
+package parser
 
 import (
 	"testing"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/mpucholblasco/s3logsbeat/logparser"
 )
 
 // Examples present here have been obtained from: https://docs.aws.amazon.com/es_es/elasticloadbalancing/latest/application/load-balancer-access-logs.html
@@ -145,7 +144,7 @@ wss 2016-08-10T00:42:46.423695Z app/my-loadbalancer/50dc6c495c0c9188 10.0.0.140:
 		},
 	}
 	errorLinesExpected := []string{}
-	logparser.AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
+	AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
 }
 
 func TestS3ALBLogParserStrangeEntries(t *testing.T) {
@@ -169,5 +168,5 @@ func TestS3ALBLogParserStrangeEntries(t *testing.T) {
 		},
 	}
 	errorLinesExpected := []string{}
-	logparser.AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
+	AssertLogParser(t, S3ALBLogParser, &logs, expected, errorLinesExpected)
 }

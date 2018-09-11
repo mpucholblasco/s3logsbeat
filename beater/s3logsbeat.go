@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/mpucholblasco/s3logsbeat/aws"
 	"github.com/mpucholblasco/s3logsbeat/config"
 	"github.com/mpucholblasco/s3logsbeat/crawler"
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
 	"github.com/mpucholblasco/s3logsbeat/registrar"
-	"github.com/mpucholblasco/s3logsbeat/worker"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
@@ -92,7 +91,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	chanSQS := make(chan *aws.SQS, 5)
+	chanSQS := make(chan *pipeline.SQS, 5)
 
 	crawler, err := crawler.New(
 		bt.config.Inputs,
@@ -114,12 +113,12 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	chanS3 := make(chan *aws.S3ObjectSQSMessage, 10)
+	chanS3 := make(chan *pipeline.S3Object, 10)
 
-	s3readerWorker := worker.NewS3ReaderWorker(chanS3, bt.client, wgEvents, wgS3Objects)
+	s3readerWorker := pipeline.NewS3ReaderWorker(chanS3, bt.client, wgEvents, wgS3Objects)
 	s3readerWorker.Start()
 
-	sqsConsumerWorker := worker.NewSQSConsumerWorker(chanSQS, chanS3, wgSQSMessages, wgS3Objects)
+	sqsConsumerWorker := pipeline.NewSQSConsumerWorker(chanSQS, chanS3, wgSQSMessages, wgS3Objects)
 	sqsConsumerWorker.Start()
 
 	// If run once, add crawler completion check as alternative to done signal

@@ -1,6 +1,6 @@
 // +build !integration
 
-package logparser
+package parser
 
 import (
 	"testing"

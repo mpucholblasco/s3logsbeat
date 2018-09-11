@@ -1,4 +1,4 @@
-package logparser
+package parser
 
 import (
 	"fmt"
@@ -138,7 +138,7 @@ var (
 func mustKindMapStringToType(o map[string]string) map[string]kindElement {
 	r, err := kindMapStringToType(o)
 	if err != nil {
-		panic(`logparser: KindMapStringToType error: ` + err.Error())
+		panic(`parser: KindMapStringToType error: ` + err.Error())
 	}
 	return r
 }
