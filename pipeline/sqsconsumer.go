@@ -48,7 +48,11 @@ func (w *SQSConsumerWorker) Start() {
 				case <-w.done:
 					logp.Info("SQS consumer worker #%d finished", workerID)
 					return
-				case sqs := <-w.in:
+				case sqs, ok := <-w.in:
+					if !ok {
+						logp.Info("SQS consumer worker #%d finished because channel is closed", workerID)
+						return
+					}
 					w.onSQSNotification(workerID, sqs)
 				}
 			}

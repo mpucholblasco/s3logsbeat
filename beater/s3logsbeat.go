@@ -126,6 +126,8 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		runOnce := func() {
 			logp.Info("Running s3logsbeat once. Waiting for completion ...")
 			crawler.WaitForCompletion()
+			close(chanSQS)
+			sqsConsumerWorker.Wait()
 			logp.Info("All data collection completed. Shutting down.")
 		}
 		waitFinished.Add(runOnce)
