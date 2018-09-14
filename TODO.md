@@ -10,7 +10,7 @@ Improvements
 [x] Add information to monitor
 [x] Add failures to monitor
 [x] Add key fields to events
-[ ] Test Once
+[x] Test Once
 [ ] Change fields (name and similar) based on config
 
 Features
