@@ -107,7 +107,7 @@ func (s *SQSMessage) ExtractNewS3Objects(mh func(s3object *S3Object) error) erro
 	}
 
 	if c == 0 {
-		logp.Warn("No S3 objects extracted from SQS message with ID %s", s.MessageId)
+		logp.Warn("No S3 objects extracted from SQS message with ID %s", *s.MessageId)
 		s.delete()
 	} else {
 		s.s3objects += c

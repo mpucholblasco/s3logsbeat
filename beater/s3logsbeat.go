@@ -91,14 +91,14 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	chanSQS := make(chan *pipeline.SQS, 5)
+	pipelineChannels := pipeline.NewChannels()
 
 	crawler, err := crawler.New(
 		bt.config.Inputs,
 		b.Info.Version,
 		bt.done,
 		*once,
-		chanSQS)
+		pipelineChannels.GetSQSChannel())
 	if err != nil {
 		logp.Err("Could not init crawler: %v", err)
 		return err
@@ -113,12 +113,10 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	chanS3 := make(chan *pipeline.S3Object, 10)
-
-	s3readerWorker := pipeline.NewS3ReaderWorker(chanS3, bt.client, wgEvents, wgS3Objects)
+	s3readerWorker := pipeline.NewS3ReaderWorker(pipelineChannels.GetS3Channel(), bt.client, wgEvents, wgS3Objects)
 	s3readerWorker.Start()
 
-	sqsConsumerWorker := pipeline.NewSQSConsumerWorker(chanSQS, chanS3, wgSQSMessages, wgS3Objects)
+	sqsConsumerWorker := pipeline.NewSQSConsumerWorker(pipelineChannels.GetSQSChannel(), pipelineChannels.GetS3Channel(), wgSQSMessages, wgS3Objects)
 	sqsConsumerWorker.Start()
 
 	// If run once, add crawler completion check as alternative to done signal
@@ -126,8 +124,11 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		runOnce := func() {
 			logp.Info("Running s3logsbeat once. Waiting for completion ...")
 			crawler.WaitForCompletion()
-			close(chanSQS)
+			pipelineChannels.CloseSQSChannel()
 			sqsConsumerWorker.Wait()
+			pipelineChannels.CloseS3Channel()
+			s3readerWorker.Wait()
+			wgEvents.Wait()
 			logp.Info("All data collection completed. Shutting down.")
 		}
 		waitFinished.Add(runOnce)
@@ -147,7 +148,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		// Wait until all will be done + all events published
 		waitEvents.Add(withLog(func() {
 			sqsConsumerWorker.Wait()
-			close(chanS3)
+			pipelineChannels.CloseS3Channel()
 			s3readerWorker.Wait()
 			wgEvents.Wait()
 		},
