@@ -19,9 +19,10 @@ type SQSMessage struct {
 	sqs *SQS
 
 	// Control S3 objects to be processed and events to be acked
-	mutex     *sync.Mutex
-	s3objects uint64
-	events    uint64
+	mutex           *sync.Mutex
+	s3objects       uint64
+	events          uint64
+	keepOnCompleted bool
 
 	// Events
 	onDeleteCallbacks []func()
@@ -29,11 +30,12 @@ type SQSMessage struct {
 
 // NewSQSMessage is a construct function for creating the object
 // with session and url of the queue as arguments
-func NewSQSMessage(sqs *SQS, sqsMessage *aws.SQSMessage) *SQSMessage {
+func NewSQSMessage(sqs *SQS, sqsMessage *aws.SQSMessage, keepOnCompleted bool) *SQSMessage {
 	return &SQSMessage{
-		SQSMessage: sqsMessage,
-		sqs:        sqs,
-		mutex:      &sync.Mutex{},
+		SQSMessage:      sqsMessage,
+		sqs:             sqs,
+		mutex:           &sync.Mutex{},
+		keepOnCompleted: keepOnCompleted,
 	}
 }
 
@@ -78,10 +80,11 @@ func (s *SQSMessage) deleteOnJobCompleted() {
 }
 
 func (s *SQSMessage) delete() {
-	// TODO: uncomment on final release
-	// if err := s.sqs.DeleteMessage(s.ReceiptHandle); err != nil {
-	// 	logp.Err("Couldn't delete SQS message with ID %s. Error: %v", s.MessageId, err)
-	// }
+	if !s.keepOnCompleted {
+		if err := s.sqs.DeleteMessage(s.ReceiptHandle); err != nil {
+			logp.Err("Couldn't delete SQS message with ID %s. Error: %v", s.MessageId, err)
+		}
+	}
 	for _, c := range s.onDeleteCallbacks {
 		c()
 	}

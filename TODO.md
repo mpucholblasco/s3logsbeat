@@ -12,6 +12,7 @@ Improvements
 [x] Add key fields to events
 [x] Test Once
 [ ] Change fields (name and similar) based on config
+[x] Flag to keep messages on queue (used on tests)
 
 Features
 [ ] Only one AWS credentials used

@@ -19,6 +19,7 @@ var RootCmd *cmd.BeatsRootCmd
 func init() {
 	var runFlags = pflag.NewFlagSet(Name, pflag.ExitOnError)
 	runFlags.AddGoFlag(flag.CommandLine.Lookup("once"))
+	runFlags.AddGoFlag(flag.CommandLine.Lookup("keepsqsmessages"))
 
 	RootCmd = cmd.GenRootCmdWithRunFlags(Name, "", beater.New, runFlags)
 }

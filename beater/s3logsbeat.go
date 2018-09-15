@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	once = flag.Bool("once", false, "Run s3logsbeat only once until all inputs will be read")
+	once            = flag.Bool("once", false, "Run s3logsbeat only once until all inputs will be read")
+	keepSQSMessages = flag.Bool("keepsqsmessages", false, "Do not delete SQS messages when processed (set for testing)")
 )
 
 type S3logsbeat struct {
@@ -113,10 +114,10 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
+	// Start the pipeline workers
 	s3readerWorker := pipeline.NewS3ReaderWorker(pipelineChannels.GetS3Channel(), bt.client, wgEvents, wgS3Objects)
+	sqsConsumerWorker := pipeline.NewSQSConsumerWorker(pipelineChannels.GetSQSChannel(), pipelineChannels.GetS3Channel(), wgSQSMessages, wgS3Objects, *keepSQSMessages)
 	s3readerWorker.Start()
-
-	sqsConsumerWorker := pipeline.NewSQSConsumerWorker(pipelineChannels.GetSQSChannel(), pipelineChannels.GetS3Channel(), wgSQSMessages, wgS3Objects)
 	sqsConsumerWorker.Start()
 
 	// If run once, add crawler completion check as alternative to done signal
@@ -168,7 +169,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	waitEvents.Wait()
 
 	sqsConsumerWorker.Stop()
-	bt.client.Close() // unlock publish events (if blocked)
+	bt.client.Close() // unlock publish events (if locked)
 	s3readerWorker.Stop()
 
 	// Close registrar
