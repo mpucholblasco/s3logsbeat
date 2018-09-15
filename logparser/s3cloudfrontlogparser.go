@@ -10,6 +10,7 @@ var (
 		WithKindMap(map[string]string{
 			"timestamp":       "time:2006-01-02\t15:04:05",
 			"x_edge_location": "deepurlencoded",
+			"cs_bytes":        "uint64",
 			"sc_bytes":        "uint64",
 			"cs_host":         "deepurlencoded",
 			"cs_uri_stem":     "deepurlencoded",

@@ -3,31 +3,31 @@
 ############################# S3logsbeat ######################################
 
 s3logsbeat:
+  # Defines how much extra time has s3logsbeat to send all pending events when app is
+  # stopped. Default: 0s (no wait extra time)
+  shutdown_timeout: 5s
+
   # SQS inputs
   inputs:
     -
-      # SQS information
+      # Input type. Only 'sqs' is valid right now
+      type: sqs
+
+      # SQS Queues URLs
       queues_url:
-        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForALB
-        - https://sqs.eu-west-1.amazonaws.com/123456789012/MyQueueForALB2
-      # Input: This must be either log or stdin
-      log_type: alb
-      # Optional fields extracter from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
-      key_regex_fields: ^(?<environment>[^\-]+)-(?<application>[^/]+)/(?<awsregion>[^/]+)
-      poll_frequency: 5m
-    -
-      queues_url:
-        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForCloudFront
-      log_type: cloudfront
+        - https://sqs.{aws-region}.amazonaws.com/{account ID}/{queue name}
+      
+      # Format of logs. Options: 'alb', 'cloudfront'
+      log_format: alb
+
+      # Optional fields extractor from key
+      # E.g. following key_regex_fields applied to key 'myapp-myenvironment/eu-west-1/2018/06/01/' adds the
+      # following fields to each event providing from this S3 key:
+      # { "application": "myapp", "environment": "myenvironment" }
+      key_regex_fields: ^(?P<application>[^\-]+)-(?P<environment>[^/\-]+)
+
+      # Poll frequency
       poll_frequency: 1m
-      # Optional additional fields
-      fields:
-        environment: staging
-    -
-      queues_url:
-        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForCloudTrail
-      log_type: cloudtrail
-      poll_frequency: 15m
 
 #================================ General =====================================
 
@@ -114,25 +114,10 @@ output.elasticsearch:
 #================================ Logging =====================================
 
 # Sets log level. The default log level is info.
-# Available log levels are: error, warning, info, debug
+# Available log levels are: critical, error, warning, info, debug
 #logging.level: debug
 
 # At debug level, you can selectively enable logging only for some components.
 # To enable all selectors use ["*"]. Examples of other selectors are "beat",
 # "publish", "service".
 #logging.selectors: ["*"]
-
-#============================== Xpack Monitoring ===============================
-# s3logsbeat can export internal metrics to a central Elasticsearch monitoring
-# cluster.  This requires xpack monitoring to be enabled in Elasticsearch.  The
-# reporting is disabled by default.
-
-# Set to true to enable the monitoring reporter.
-#xpack.monitoring.enabled: false
-
-# Uncomment to send the metrics to Elasticsearch. Most settings from the
-# Elasticsearch output are accepted here as well. Any setting that is not set is
-# automatically inherited from the Elasticsearch output configuration, so if you
-# have the Elasticsearch output configured, you can simply uncomment the
-# following line.
-#xpack.monitoring.elasticsearch:

@@ -271,12 +271,362 @@ None
 
 
 [float]
-=== counter
+=== type
 
-type: long
+type: string
 
-required: True
+The type of request or connection.
 
-PLEASE UPDATE DOCUMENTATION
+
+[float]
+=== elb
+
+type: string
+
+The resource ID of the load balancer
+
+
+[float]
+=== client_ip
+
+type: string
+
+Client IP
+
+
+[float]
+=== client_port
+
+type: integer
+
+Client port
+
+
+[float]
+=== target_ip
+
+type: string
+
+Target that processed this request IP
+
+
+[float]
+=== target_port
+
+type: integer
+
+Target that processed this request port
+
+
+[float]
+=== request_processing_time
+
+type: double
+
+The total time elapsed (in seconds, with millisecond precision) from the time the load balancer received the request until the time it sent it to a target.
+
+
+[float]
+=== target_processing_time
+
+type: double
+
+The total time elapsed (in seconds, with millisecond precision) from the time the load balancer sent the request to a target until the target started to send the response headers.
+
+
+[float]
+=== response_processing_time
+
+type: double
+
+The total time elapsed (in seconds, with millisecond precision) from the time the load balancer received the response header from the target until it started to send the response to the client. This includes both the queuing time at the load balancer and the connection acquisition time from the load balancer to the client.
+
+
+[float]
+=== elb_status_code
+
+type: integer
+
+The status code of the response from the load balancer
+
+
+[float]
+=== target_status_code
+
+type: integer
+
+The status code of the response from the target
+
+
+[float]
+=== received_bytes
+
+type: integer
+
+The size of the request, in bytes, received from the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes received from the client on the connection
+
+
+[float]
+=== sent_bytes
+
+type: integer
+
+The size of the response, in bytes, sent to the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes sent to the client on the connection
+
+
+[float]
+=== request_verb
+
+type: string
+
+Request verb
+
+
+[float]
+=== request_url
+
+type: string
+
+Request URL
+
+
+[float]
+=== request_proto
+
+type: string
+
+Request protocol
+
+
+[float]
+=== user_agent
+
+type: string
+
+User agent
+
+
+[float]
+=== ssl_cipher
+
+type: string
+
+SSL cipher
+
+
+[float]
+=== ssl_protocol
+
+type: string
+
+SSL protocol
+
+
+[float]
+=== target_group_arn
+
+type: string
+
+The Amazon Resource Name (ARN) of the target group
+
+
+[float]
+=== trace_id
+
+type: string
+
+The contents of the X-Amzn-Trace-Id header
+
+
+[float]
+=== x_edge_location
+
+type: string
+
+The edge location that served the request. Each edge location is identified by a three-letter code and an arbitrarily assigned number, for example, DFW3. The three-letter code typically corresponds with the International Air Transport Association airport code for an airport near the edge location. (These abbreviations might change in the future.) For a list of edge locations, see the Amazon CloudFront detail page, http://aws.amazon.com/cloudfront
+
+
+[float]
+=== sc_bytes
+
+type: integer
+
+The total number of bytes that CloudFront served to the viewer in response to the request, including headers
+
+
+[float]
+=== c_ip
+
+type: string
+
+The IP address of the viewer that made the request
+
+
+[float]
+=== cs_method
+
+type: string
+
+The HTTP access method: DELETE, GET, HEAD, OPTIONS, PATCH, POST, or PUT
+
+
+[float]
+=== cs_host
+
+type: string
+
+The domain name of the CloudFront distribution
+
+
+[float]
+=== cs_uri_stem
+
+type: string
+
+The portion of the URI that identifies the path and object
+
+
+[float]
+=== sc_status
+
+type: integer
+
+One of the following values: 1) An HTTP status code or 000, which indicates that the viewer closed the connection
+
+
+[float]
+=== cs_referer
+
+type: string
+
+The name of the domain that originated the request
+
+
+[float]
+=== cs_user_agent
+
+type: string
+
+The value of the User-Agent header in the request
+
+
+[float]
+=== cs_uri_query
+
+type: string
+
+The query string portion of the URI, if any
+
+
+[float]
+=== cs_cookie
+
+type: string
+
+The cookie header in the request, including name-value pairs and the associated attributes
+
+
+[float]
+=== x_edge_result_type
+
+type: string
+
+How CloudFront classifies the response after the last byte left the edge location. See official documentation for types
+
+
+[float]
+=== x_edge_request_id
+
+type: string
+
+An encrypted string that uniquely identifies a request
+
+
+[float]
+=== x_host_header
+
+type: string
+
+The value that the viewer included in the Host header for this request
+
+
+[float]
+=== cs_protocol
+
+type: string
+
+The protocol that the viewer specified in the request, either http or https
+
+
+[float]
+=== cs_bytes
+
+type: integer
+
+The number of bytes of data that the viewer included in the request (client to server bytes), including headers
+
+
+[float]
+=== time_taken
+
+type: double
+
+The number of seconds (to the thousandth of a second, for example, 0.002) between the time that a CloudFront edge server receives a viewer's request and the time that CloudFront writes the last byte of the response to the edge server's output queue as measured on the server
+
+
+[float]
+=== x_forwarded_for
+
+type: string
+
+If the viewer used an HTTP proxy or a load balancer to send the request, the value of c-ip in field 5 is the IP address of the proxy or load balancer. In that case, x-forwarded-for is the IP address of the viewer that originated the request
+
+
+[float]
+=== ssl_protocol
+
+type: string
+
+When cs-protocol in field 17 is https, the SSL protocol that the client and CloudFront negotiated for transmitting the request and response
+
+
+[float]
+=== ssl_cipher
+
+type: string
+
+When cs-protocol in field 17 is https, the SSL cipher that the client and CloudFront negotiated for encrypting the request and response
+
+
+[float]
+=== x_edge_response_result_type
+
+type: string
+
+How CloudFront classified the response just before returning the response to the viewer
+
+
+[float]
+=== cs_protocol_version
+
+type: string
+
+The HTTP version that the viewer specified in the request
+
+
+[float]
+=== fle_status
+
+type: string
+
+When field-level encryption is configured for a distribution, a code that indicates whether the request body was successfully processed
+
+
+[float]
+=== fle_encrypted_fields
+
+type: string
+
+The number of fields that CloudFront encrypted and forwarded to the origin
 
 
