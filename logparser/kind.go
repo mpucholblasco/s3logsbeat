@@ -26,6 +26,7 @@ const (
 	kindFloat64
 	kindString
 	kindURLEncoded
+	kindDeepURLEncoded
 
 	kindTimeISO8601
 	kindTimeLayout // based on https://golang.org/pkg/time/#Parse
@@ -102,6 +103,10 @@ var (
 		kindElement{
 			kind: kindURLEncoded,
 			name: "urlencoded",
+		},
+		kindElement{
+			kind: kindDeepURLEncoded,
+			name: "deepurlencoded",
 		},
 		kindElement{
 			kind: kindTimeISO8601,
@@ -234,6 +239,19 @@ func parseStringToKind(e kindElement, value string) (interface{}, error) {
 		return strconv.ParseFloat(value, 64)
 	case kindURLEncoded:
 		return url.QueryUnescape(value)
+	case kindDeepURLEncoded:
+		return deepURLDecode(value), nil
 	}
 	return value, nil
+}
+
+func deepURLDecode(u string) string {
+	p := u
+	for {
+		n, err := url.QueryUnescape(p)
+		if err != nil || n == p {
+			return p
+		}
+		p = n
+	}
 }

@@ -12,28 +12,30 @@ import (
 // KindMapStringToType & MustKindMapStringToType tests
 func TestCustomLogParserKindMapStringToTypeCorrect(t *testing.T) {
 	m := map[string]string{
-		"timeLayout": "time:2006-01-02\t15:04:05",
-		"time":       "timeISO8601",
-		"int":        "int",
-		"int8":       "int8",
-		"int16":      "int16",
-		"bool":       "bool",
-		"string2":    "string",
-		"float32":    "float32",
-		"float64":    "float64",
-		"urlencoded": "urlencoded",
+		"timeLayout":     "time:2006-01-02\t15:04:05",
+		"time":           "timeISO8601",
+		"int":            "int",
+		"int8":           "int8",
+		"int16":          "int16",
+		"bool":           "bool",
+		"string2":        "string",
+		"float32":        "float32",
+		"float64":        "float64",
+		"urlencoded":     "urlencoded",
+		"deepurlencoded": "deepurlencoded",
 	}
 	expected := map[string]kindElement{
-		"timeLayout": kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02\t15:04:05", name: "time layout (2006-01-02\t15:04:05)"},
-		"time":       kindMap[kindTimeISO8601],
-		"int":        kindMap[kindInt],
-		"int8":       kindMap[kindInt8],
-		"int16":      kindMap[kindInt16],
-		"bool":       kindMap[kindBool],
-		"string2":    kindMap[kindString],
-		"float32":    kindMap[kindFloat32],
-		"float64":    kindMap[kindFloat64],
-		"urlencoded": kindMap[kindURLEncoded],
+		"timeLayout":     kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02\t15:04:05", name: "time layout (2006-01-02\t15:04:05)"},
+		"time":           kindMap[kindTimeISO8601],
+		"int":            kindMap[kindInt],
+		"int8":           kindMap[kindInt8],
+		"int16":          kindMap[kindInt16],
+		"bool":           kindMap[kindBool],
+		"string2":        kindMap[kindString],
+		"float32":        kindMap[kindFloat32],
+		"float64":        kindMap[kindFloat64],
+		"urlencoded":     kindMap[kindURLEncoded],
+		"deepurlencoded": kindMap[kindDeepURLEncoded],
 	}
 
 	value, err := kindMapStringToType(m)
@@ -156,6 +158,11 @@ func TestCustomLogParserParseStringToKindsWithNoErrors(t *testing.T) {
 			kind:     kindMap[kindURLEncoded],
 			strValue: "Mozilla/4.0%20(compatible;%20MSIE%207.0;%20Windows%20NT%205.1)",
 			value:    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)",
+		},
+		elem{
+			kind:     kindMap[kindDeepURLEncoded],
+			strValue: `8%2525%2520fresa & maracuyá`,
+			value:    "8% fresa & maracuyá",
 		},
 	}
 
