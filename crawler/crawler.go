@@ -82,13 +82,13 @@ func (c *Crawler) Stop() {
 	logp.Info("Stopping Crawler")
 
 	logp.Info("Stopping %v inputs", len(c.inputs))
-	for _, p := range c.inputs {
+	for _, i := range c.inputs {
 		// Stop inputs in parallel
 		c.wg.Add(1)
-		go func() {
+		go func(i *input.Runner) {
 			defer c.wg.Done()
-			p.Stop()
-		}()
+			i.Stop()
+		}(i)
 	}
 	c.wg.Wait()
 
