@@ -3,5 +3,28 @@
 ############################# S3logsbeat ######################################
 
 s3logsbeat:
-  # Defines how often an event is sent to the output
-  period: 1s
+  # Defines how much extra time has s3logsbeat to send all pending events when app is
+  # stopped. Default: 0s (no wait extra time)
+  shutdown_timeout: 5s
+
+  # SQS inputs
+  inputs:
+    -
+      # Input type. Only 'sqs' is valid right now
+      type: sqs
+
+      # SQS Queues URLs
+      queues_url:
+        - https://sqs.{aws-region}.amazonaws.com/{account ID}/{queue name}
+      
+      # Format of logs. Options: 'alb', 'cloudfront'
+      log_format: alb
+
+      # Optional fields extractor from key
+      # E.g. following key_regex_fields applied to key 'myapp-myenvironment/eu-west-1/2018/06/01/' adds the
+      # following fields to each event providing from this S3 key:
+      # { "application": "myapp", "environment": "myenvironment" }
+      key_regex_fields: ^(?P<application>[^\-]+)-(?P<environment>[^/\-]+)
+
+      # Poll frequency
+      poll_frequency: 1m

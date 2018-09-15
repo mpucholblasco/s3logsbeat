@@ -2,8 +2,188 @@
   title: s3logsbeat
   description:
   fields:
-    - name: counter
-      type: long
-      required: true
+    # ALB fields. Extracted from: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+    - name: type
+      type: string
       description: >
-        PLEASE UPDATE DOCUMENTATION
+        The type of request or connection.
+    - name: elb
+      type: string
+      description: >
+        The resource ID of the load balancer
+    - name: client_ip
+      type: string
+      description: >
+        Client IP
+    - name: client_port
+      type: integer
+      description: >
+        Client port
+    - name: target_ip
+      type: string
+      description: >
+        Target that processed this request IP
+    - name: target_port
+      type: integer
+      description: >
+        Target that processed this request port
+    - name: request_processing_time
+      type: double
+      description: >
+        The total time elapsed (in seconds, with millisecond precision) from the time the load balancer received the request until the time it sent it to a target.
+    - name: target_processing_time
+      type: double
+      description: >
+        The total time elapsed (in seconds, with millisecond precision) from the time the load balancer sent the request to a target until the target started to send the response headers.
+    - name: response_processing_time
+      type: double
+      description: >
+        The total time elapsed (in seconds, with millisecond precision) from the time the load balancer received the response header from the target until it started to send the response to the client. This includes both the queuing time at the load balancer and the connection acquisition time from the load balancer to the client.
+    - name: elb_status_code
+      type: integer
+      description: >
+        The status code of the response from the load balancer
+    - name: target_status_code
+      type: integer
+      description: >
+        The status code of the response from the target
+    - name: received_bytes
+      type: integer
+      description: >
+        The size of the request, in bytes, received from the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes received from the client on the connection
+    - name: sent_bytes
+      type: integer
+      description: >
+        The size of the response, in bytes, sent to the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes sent to the client on the connection
+    - name: request_verb
+      type: string
+      description: >
+        Request verb
+    - name: request_url
+      type: string
+      description: >
+        Request URL
+    - name: request_proto
+      type: string
+      description: >
+        Request protocol
+    - name: user_agent
+      type: string
+      description: >
+        User agent
+    - name: ssl_cipher
+      type: string
+      description: >
+        SSL cipher
+    - name: ssl_protocol
+      type: string
+      description: >
+        SSL protocol
+    - name: target_group_arn
+      type: string
+      description: >
+        The Amazon Resource Name (ARN) of the target group
+    - name: trace_id
+      type: string
+      description: >
+        The contents of the X-Amzn-Trace-Id header
+    
+    # CloudFront fields. Extracted from https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
+    - name: x_edge_location
+      type: string
+      description: >
+        The edge location that served the request. Each edge location is identified by a three-letter code and an arbitrarily assigned number, for example, DFW3. The three-letter code typically corresponds with the International Air Transport Association airport code for an airport near the edge location. (These abbreviations might change in the future.) For a list of edge locations, see the Amazon CloudFront detail page, http://aws.amazon.com/cloudfront
+    - name: sc_bytes
+      type: integer
+      description: >
+        The total number of bytes that CloudFront served to the viewer in response to the request, including headers
+    - name: c_ip
+      type: string
+      description: >
+        The IP address of the viewer that made the request
+    - name: cs_method
+      type: string
+      description: >
+        The HTTP access method: DELETE, GET, HEAD, OPTIONS, PATCH, POST, or PUT
+    - name: cs_host
+      type: string
+      description: >
+        The domain name of the CloudFront distribution
+    - name: cs_uri_stem
+      type: string
+      description: >
+        The portion of the URI that identifies the path and object
+    - name: sc_status
+      type: integer
+      description: >
+        One of the following values: 1) An HTTP status code or 000, which indicates that the viewer closed the connection
+    - name: cs_referer
+      type: string
+      description: >
+        The name of the domain that originated the request
+    - name: cs_user_agent
+      type: string
+      description: >
+        The value of the User-Agent header in the request
+    - name: cs_uri_query
+      type: string
+      description: >
+        The query string portion of the URI, if any
+    - name: cs_cookie
+      type: string
+      description: >
+        The cookie header in the request, including name-value pairs and the associated attributes
+    - name: x_edge_result_type
+      type: string
+      description: >
+        How CloudFront classifies the response after the last byte left the edge location. See official documentation for types
+    - name: x_edge_request_id
+      type: string
+      description: >
+        An encrypted string that uniquely identifies a request
+    - name: x_host_header
+      type: string
+      description: >
+        The value that the viewer included in the Host header for this request
+    - name: cs_protocol
+      type: string
+      description: >
+        The protocol that the viewer specified in the request, either http or https
+    - name: cs_bytes
+      type: integer
+      description: >
+        The number of bytes of data that the viewer included in the request (client to server bytes), including headers
+    - name: time_taken
+      type: double
+      description: >
+        The number of seconds (to the thousandth of a second, for example, 0.002) between the time that a CloudFront edge server receives a viewer's request and the time that CloudFront writes the last byte of the response to the edge server's output queue as measured on the server
+    - name: x_forwarded_for
+      type: string
+      description: >
+        If the viewer used an HTTP proxy or a load balancer to send the request, the value of c-ip in field 5 is the IP address of the proxy or load balancer. In that case, x-forwarded-for is the IP address of the viewer that originated the request
+    - name: ssl_protocol
+      type: string
+      description: >
+        When cs-protocol in field 17 is https, the SSL protocol that the client and CloudFront negotiated for transmitting the request and response
+    - name: ssl_cipher
+      type: string
+      description: >
+        When cs-protocol in field 17 is https, the SSL cipher that the client and CloudFront negotiated for encrypting the request and response
+    - name: x_edge_response_result_type
+      type: string
+      description: >
+        How CloudFront classified the response just before returning the response to the viewer
+    - name: cs_protocol_version
+      type: string
+      description: >
+        The HTTP version that the viewer specified in the request
+    - name: fle_status
+      type: string
+      description: >
+        When field-level encryption is configured for a distribution, a code that indicates whether the request body was successfully processed
+    - name: fle_encrypted_fields
+      type: string
+      description: >
+        The number of fields that CloudFront encrypted and forwarded to the origin
+
+    
