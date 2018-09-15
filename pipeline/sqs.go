@@ -13,13 +13,15 @@ type SQS struct {
 	*aws.SQS
 	logParser      logparser.LogParser
 	keyRegexFields *regexp.Regexp
+	metadataType   string
 }
 
 // NewSQS creates a new SQS to be sent thru pipeline
-func NewSQS(session *session.Session, queueURL *string, logParser logparser.LogParser, keyRegexFields *regexp.Regexp) *SQS {
+func NewSQS(session *session.Session, queueURL *string, logParser logparser.LogParser, keyRegexFields *regexp.Regexp, metadataType string) *SQS {
 	return &SQS{
 		SQS:            aws.NewSQS(session, queueURL),
 		logParser:      logParser,
 		keyRegexFields: keyRegexFields,
+		metadataType:   metadataType,
 	}
 }

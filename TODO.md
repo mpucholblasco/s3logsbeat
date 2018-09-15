@@ -14,7 +14,7 @@ Improvements
 [ ] Change fields (name and similar) based on config
 [x] Flag to keep messages on queue (used on tests)
 [x] Test CloudFront logs
-[ ] Include log type on @metadata
+[x] Include log type on @metadata (in format field)
 
 Features
 [ ] Only one AWS credentials used and based on roles or .aws/config

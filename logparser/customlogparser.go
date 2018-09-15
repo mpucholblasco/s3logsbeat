@@ -9,8 +9,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/elastic/beats/libbeat/logp"
-
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 )
@@ -100,7 +98,6 @@ LINE_READER:
 			if match == nil {
 				eh(line, fmt.Errorf("Line does not match expected format"))
 			} else {
-				logp.Debug("asdf", line)
 				fields := common.MapStr{}
 				for i, name := range c.reNames {
 					// Ignore the whole regexp match, unnamed groups, and empty values

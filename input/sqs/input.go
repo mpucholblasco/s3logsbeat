@@ -57,7 +57,7 @@ func (p *Input) Run() {
 	awsSession := aws.NewSession()
 
 	for _, queue := range p.config.QueuesURL {
-		sqs := pipeline.NewSQS(awsSession, &queue, p.logParser, p.config.KeyRegexFields)
+		sqs := pipeline.NewSQS(awsSession, &queue, p.logParser, p.config.KeyRegexFields, p.config.LogFormat)
 
 		select {
 		case p.out <- sqs:
