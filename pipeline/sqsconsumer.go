@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/elastic/beats/libbeat/logp"
 	"github.com/mpucholblasco/s3logsbeat/aws"
+
+	"github.com/elastic/beats/libbeat/logp"
 )
 
 const (

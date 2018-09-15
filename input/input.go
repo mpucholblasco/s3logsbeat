@@ -5,9 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mpucholblasco/s3logsbeat/pipeline"
+
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
 
 	"github.com/mitchellh/hashstructure"
 )

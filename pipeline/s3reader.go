@@ -5,9 +5,10 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 
+	"github.com/mpucholblasco/s3logsbeat/aws"
+
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/aws"
 )
 
 const (

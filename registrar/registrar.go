@@ -3,8 +3,9 @@ package registrar
 import (
 	"sync"
 
-	"github.com/elastic/beats/libbeat/logp"
 	"github.com/mpucholblasco/s3logsbeat/pipeline"
+
+	"github.com/elastic/beats/libbeat/logp"
 )
 
 type Registrar struct {

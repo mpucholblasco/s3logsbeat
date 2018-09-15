@@ -8,8 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/elastic/beats/libbeat/common"
 	"github.com/mpucholblasco/s3logsbeat/aws"
+
+	"github.com/elastic/beats/libbeat/common"
 )
 
 func TestGetKeyFields(t *testing.T) {

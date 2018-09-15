@@ -3,9 +3,10 @@ package beater
 import (
 	"sync"
 
-	"github.com/elastic/beats/libbeat/monitoring"
 	"github.com/mpucholblasco/s3logsbeat/pipeline"
 	"github.com/mpucholblasco/s3logsbeat/registrar"
+
+	"github.com/elastic/beats/libbeat/monitoring"
 )
 
 type registrarLogger struct {

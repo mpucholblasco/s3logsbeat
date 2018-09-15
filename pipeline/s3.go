@@ -3,8 +3,9 @@ package pipeline
 import (
 	"fmt"
 
-	"github.com/elastic/beats/libbeat/common"
 	"github.com/mpucholblasco/s3logsbeat/aws"
+
+	"github.com/elastic/beats/libbeat/common"
 )
 
 // S3Object S3 object element to send thru pipeline
