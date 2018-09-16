@@ -75,9 +75,10 @@ func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *S3Object
 	}
 
 	onLogParserSucceed := func(event *beat.Event) {
-		event.Meta = common.MapStr{
-			"format": s3object.sqsMessage.sqs.metadataType,
+		if event.Meta == nil {
+			event.Meta = common.MapStr{}
 		}
+		event.Meta["format"] = s3object.sqsMessage.sqs.metadataType
 		event.Private = s3object.sqsMessage // store to reduce on ACK function
 		event.Fields.Update(*keyFields)
 		s3object.sqsMessage.AddEvents(1)

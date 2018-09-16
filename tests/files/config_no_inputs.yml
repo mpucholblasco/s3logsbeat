@@ -1,5 +1,5 @@
 s3logsbeat:
-  # No prospectors
+  # No inputs
   inputs: []
 output:
   elasticsearch:

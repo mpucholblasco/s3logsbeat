@@ -126,10 +126,12 @@ LINE_READER:
 				fields.Delete(c.timestampField)
 				h := sha1.New()
 				io.WriteString(h, line)
-				fields["_id"] = hex.EncodeToString(h.Sum(nil))
 				event := &beat.Event{
 					Timestamp: timestamp,
 					Fields:    fields,
+					Meta: common.MapStr{
+						"_id": hex.EncodeToString(h.Sum(nil)),
+					},
 				}
 				mh(event)
 			}

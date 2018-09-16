@@ -273,7 +273,7 @@ None
 [float]
 === type
 
-type: string
+type: text
 
 The type of request or connection.
 
@@ -281,7 +281,7 @@ The type of request or connection.
 [float]
 === elb
 
-type: string
+type: text
 
 The resource ID of the load balancer
 
@@ -289,7 +289,7 @@ The resource ID of the load balancer
 [float]
 === client_ip
 
-type: string
+type: text
 
 Client IP
 
@@ -305,7 +305,7 @@ Client port
 [float]
 === target_ip
 
-type: string
+type: text
 
 Target that processed this request IP
 
@@ -377,7 +377,7 @@ The size of the response, in bytes, sent to the client (requester). For HTTP req
 [float]
 === request_verb
 
-type: string
+type: text
 
 Request verb
 
@@ -385,7 +385,7 @@ Request verb
 [float]
 === request_url
 
-type: string
+type: text
 
 Request URL
 
@@ -393,7 +393,7 @@ Request URL
 [float]
 === request_proto
 
-type: string
+type: text
 
 Request protocol
 
@@ -401,7 +401,7 @@ Request protocol
 [float]
 === user_agent
 
-type: string
+type: text
 
 User agent
 
@@ -409,7 +409,7 @@ User agent
 [float]
 === ssl_cipher
 
-type: string
+type: text
 
 SSL cipher
 
@@ -417,7 +417,7 @@ SSL cipher
 [float]
 === ssl_protocol
 
-type: string
+type: text
 
 SSL protocol
 
@@ -425,7 +425,7 @@ SSL protocol
 [float]
 === target_group_arn
 
-type: string
+type: text
 
 The Amazon Resource Name (ARN) of the target group
 
@@ -433,7 +433,7 @@ The Amazon Resource Name (ARN) of the target group
 [float]
 === trace_id
 
-type: string
+type: text
 
 The contents of the X-Amzn-Trace-Id header
 
@@ -441,7 +441,7 @@ The contents of the X-Amzn-Trace-Id header
 [float]
 === x_edge_location
 
-type: string
+type: text
 
 The edge location that served the request. Each edge location is identified by a three-letter code and an arbitrarily assigned number, for example, DFW3. The three-letter code typically corresponds with the International Air Transport Association airport code for an airport near the edge location. (These abbreviations might change in the future.) For a list of edge locations, see the Amazon CloudFront detail page, http://aws.amazon.com/cloudfront
 
@@ -457,7 +457,7 @@ The total number of bytes that CloudFront served to the viewer in response to th
 [float]
 === c_ip
 
-type: string
+type: text
 
 The IP address of the viewer that made the request
 
@@ -465,7 +465,7 @@ The IP address of the viewer that made the request
 [float]
 === cs_method
 
-type: string
+type: text
 
 The HTTP access method: DELETE, GET, HEAD, OPTIONS, PATCH, POST, or PUT
 
@@ -473,7 +473,7 @@ The HTTP access method: DELETE, GET, HEAD, OPTIONS, PATCH, POST, or PUT
 [float]
 === cs_host
 
-type: string
+type: text
 
 The domain name of the CloudFront distribution
 
@@ -481,7 +481,7 @@ The domain name of the CloudFront distribution
 [float]
 === cs_uri_stem
 
-type: string
+type: text
 
 The portion of the URI that identifies the path and object
 
@@ -497,7 +497,7 @@ One of the following values: 1) An HTTP status code or 000, which indicates that
 [float]
 === cs_referer
 
-type: string
+type: text
 
 The name of the domain that originated the request
 
@@ -505,7 +505,7 @@ The name of the domain that originated the request
 [float]
 === cs_user_agent
 
-type: string
+type: text
 
 The value of the User-Agent header in the request
 
@@ -513,7 +513,7 @@ The value of the User-Agent header in the request
 [float]
 === cs_uri_query
 
-type: string
+type: text
 
 The query string portion of the URI, if any
 
@@ -521,7 +521,7 @@ The query string portion of the URI, if any
 [float]
 === cs_cookie
 
-type: string
+type: text
 
 The cookie header in the request, including name-value pairs and the associated attributes
 
@@ -529,7 +529,7 @@ The cookie header in the request, including name-value pairs and the associated 
 [float]
 === x_edge_result_type
 
-type: string
+type: text
 
 How CloudFront classifies the response after the last byte left the edge location. See official documentation for types
 
@@ -537,7 +537,7 @@ How CloudFront classifies the response after the last byte left the edge locatio
 [float]
 === x_edge_request_id
 
-type: string
+type: text
 
 An encrypted string that uniquely identifies a request
 
@@ -545,7 +545,7 @@ An encrypted string that uniquely identifies a request
 [float]
 === x_host_header
 
-type: string
+type: text
 
 The value that the viewer included in the Host header for this request
 
@@ -553,7 +553,7 @@ The value that the viewer included in the Host header for this request
 [float]
 === cs_protocol
 
-type: string
+type: text
 
 The protocol that the viewer specified in the request, either http or https
 
@@ -577,7 +577,7 @@ The number of seconds (to the thousandth of a second, for example, 0.002) betwee
 [float]
 === x_forwarded_for
 
-type: string
+type: text
 
 If the viewer used an HTTP proxy or a load balancer to send the request, the value of c-ip in field 5 is the IP address of the proxy or load balancer. In that case, x-forwarded-for is the IP address of the viewer that originated the request
 
@@ -585,7 +585,7 @@ If the viewer used an HTTP proxy or a load balancer to send the request, the val
 [float]
 === ssl_protocol
 
-type: string
+type: text
 
 When cs-protocol in field 17 is https, the SSL protocol that the client and CloudFront negotiated for transmitting the request and response
 
@@ -593,7 +593,7 @@ When cs-protocol in field 17 is https, the SSL protocol that the client and Clou
 [float]
 === ssl_cipher
 
-type: string
+type: text
 
 When cs-protocol in field 17 is https, the SSL cipher that the client and CloudFront negotiated for encrypting the request and response
 
@@ -601,7 +601,7 @@ When cs-protocol in field 17 is https, the SSL cipher that the client and CloudF
 [float]
 === x_edge_response_result_type
 
-type: string
+type: text
 
 How CloudFront classified the response just before returning the response to the viewer
 
@@ -609,7 +609,7 @@ How CloudFront classified the response just before returning the response to the
 [float]
 === cs_protocol_version
 
-type: string
+type: text
 
 The HTTP version that the viewer specified in the request
 
@@ -617,7 +617,7 @@ The HTTP version that the viewer specified in the request
 [float]
 === fle_status
 
-type: string
+type: text
 
 When field-level encryption is configured for a distribution, a code that indicates whether the request body was successfully processed
 
@@ -625,7 +625,7 @@ When field-level encryption is configured for a distribution, a code that indica
 [float]
 === fle_encrypted_fields
 
-type: string
+type: text
 
 The number of fields that CloudFront encrypted and forwarded to the origin
 

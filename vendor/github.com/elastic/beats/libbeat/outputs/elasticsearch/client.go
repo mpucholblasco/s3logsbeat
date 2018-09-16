@@ -340,8 +340,9 @@ func createEventBulkMeta(
 
 	if pipeline == "" {
 		type bulkMetaIndex struct {
-			Index   string `json:"_index" struct:"_index"`
-			DocType string `json:"_type" struct:"_type"`
+			Index   string  `json:"_index" struct:"_index"`
+			DocType string  `json:"_type" struct:"_type"`
+			ID      *string `json:"_id,omitempty" struct:"_id"` // no omitemtpy on struct. If null -> generates ID automatically
 		}
 		type bulkMeta struct {
 			Index bulkMetaIndex `json:"index"`
@@ -351,6 +352,7 @@ func createEventBulkMeta(
 			Index: bulkMetaIndex{
 				Index:   getIndex(event, index),
 				DocType: eventType,
+				ID:      getEventID(event),
 			},
 		}
 	}
@@ -406,6 +408,20 @@ func getIndex(event *beat.Event, index outil.Selector) string {
 
 	str, _ := index.Select(event)
 	return str
+}
+
+// getEventID returns the ID associated to an event
+// It is extracted from meta
+func getEventID(event *beat.Event) *string {
+	if event.Meta != nil {
+		if str, exists := event.Meta["_id"]; exists {
+			id, ok := str.(string)
+			if ok {
+				return &id
+			}
+		}
+	}
+	return nil
 }
 
 // bulkCollectPublishFails checks per item errors returning all events

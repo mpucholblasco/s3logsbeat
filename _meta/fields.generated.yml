@@ -4,11 +4,11 @@
   fields:
     # ALB fields. Extracted from: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
     - name: type
-      type: keyword
+      type: text
       description: >
         The type of request or connection.
     - name: elb
-      type: keyword
+      type: text
       description: >
         The resource ID of the load balancer
     - name: client_ip
@@ -56,7 +56,7 @@
       description: >
         The size of the response, in bytes, sent to the client (requester). For HTTP requests, this includes the headers. For WebSockets, this is the total number of bytes sent to the client on the connection
     - name: request_verb
-      type: keyword
+      type: text
       description: >
         Request verb
     - name: request_url
@@ -64,7 +64,7 @@
       description: >
         Request URL
     - name: request_proto
-      type: keyword
+      type: text
       description: >
         Request protocol
     - name: user_agent
@@ -72,15 +72,15 @@
       description: >
         User agent
     - name: ssl_cipher
-      type: keyword
+      type: text
       description: >
         SSL cipher
     - name: ssl_protocol
-      type: keyword
+      type: text
       description: >
         SSL protocol
     - name: target_group_arn
-      type: keyword
+      type: text
       description: >
         The Amazon Resource Name (ARN) of the target group
     - name: trace_id
@@ -90,7 +90,7 @@
     
     # CloudFront fields. Extracted from https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
     - name: x_edge_location
-      type: keyword
+      type: text
       description: >
         The edge location that served the request. Each edge location is identified by a three-letter code and an arbitrarily assigned number, for example, DFW3. The three-letter code typically corresponds with the International Air Transport Association airport code for an airport near the edge location. (These abbreviations might change in the future.) For a list of edge locations, see the Amazon CloudFront detail page, http://aws.amazon.com/cloudfront
     - name: sc_bytes
@@ -102,7 +102,7 @@
       description: >
         The IP address of the viewer that made the request
     - name: cs_method
-      type: keyword
+      type: text
       description: >
         The HTTP access method: DELETE, GET, HEAD, OPTIONS, PATCH, POST, or PUT
     - name: cs_host

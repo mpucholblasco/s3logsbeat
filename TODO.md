@@ -14,9 +14,9 @@ Improvements
 [ ] Change fields (name and similar) based on config
 [x] Flag to keep messages on queue (used on tests)
 [x] Test CloudFront logs
-[x] Include log type on @metadata (in format field)
+[x] Include log format on @metadata (in format field)
 [x] make test & others
-[ ] event conventions https://www.elastic.co/guide/en/beats/devguide/current/event-conventions.html
+[KO] event conventions https://www.elastic.co/guide/en/beats/devguide/current/event-conventions.html
 [ ] update documentation
 
 Features
