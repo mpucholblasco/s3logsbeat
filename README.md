@@ -1,9 +1,202 @@
 # S3logsbeat
 
-Welcome to S3logsbeat.
+S3logsbeat is a [beat](https://www.elastic.co/products/beats) to read logs from AWS S3 and send them to
+ElasticSearch. AWS uses S3 as destination for several internal logs: ALB, CloudFront, CloudTrail, etc.
+This beat is based on [S3 event notifications](https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+to send notifications to an SQS queue when a new object is created on S3. Then, S3logsbeat polls
+these SQS queues, reads new objects messages (ignoring others), downloads S3 objects, parses logs to convert
+them into events, and finally publishes to ElasticSearch. If all events are published correctly, SQS message
+is deleted from SQS queue.
 
-Ensure that this folder is at the following location:
-`${GOPATH}/src/github.com/mpucholblasco/s3logsbeat`
+## Features
+S3logsbeat has the following features:
+* Limited workers to poll from SQS and download objects from S3 to avoid exceeding AWS request limits
+* Usage of internal bounded queues to avoid overloading outputs
+* If output is overloaded or inaccessible, no more messages are read from SQS
+* High availability: you can have several S3logsbeat running in parallel
+* Reliability: SQS messages are only deleted when output contains all events
+* Avoid duplicates on supported outputs
+* Supported S3 log parsers: ALB, CloudFront
+* Extra fields based on S3 key
+* Delayed shutdown based on timout and pending messages to be acked by outputs
+
+However, it has some use cases not supported yet:
+* S3 objects already present on bucket when S3 event notifications is activated are not processed
+* CloudTrail logs not supported yet
+* Custom logs not supported yet
+
+Unsupported features are on the roadmap, so just wait for them.
+
+### Reduce overloading on outputs
+We have to configure internal beat queue in order to reduce overloading on outputs. Edit your configuration
+file and add the following configuration on root:
+```yaml
+queue.mem:
+  events: 128 # default: 4096
+  flush.min_events: 64 # default: 2048
+```
+
+In this way, if we try to send 128 messages to outputs and output is outline or saturated, publishing is blocked. As
+publishing is blocked, all internal bounded queues are filled eventually and no more SQS messages are read (avoiding
+extra requests to SQS or S3). Once output is available again, messages present on internal queues are sent to
+output and new messages are then read from SQS.
+
+### SQS messages deleted when events are acked
+S3logsbeat is based on [SQS Visibility timeout feature](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html). When a message is read from SQS, it just "dissapears" from the queue. However, if message is not deleted, it
+reappears on the queue after visitiblity timeout expires, making it available to be read again. This is perfect
+for those cases in which a consumer deads unexpectedly.
+
+S3logsbeat uses this principle. The workflow to process an SQS is the following:
+1) SQS message is read from an SQS queue
+2) New S3 objects appearing on SQS message are downloaded from S3 and parsed to generate events
+3) Each event is sent to output
+4) When output confirms the reception of all events related to an SQS message, SQS message is deleted from the queue
+
+### Avoid duplicates
+S3logsbeat can avoid duplicates on ElasticSearch output transparently by adding an event (document on ES) identifier
+based on its content.
+
+It can also be used on Logstash output because a `@metadata` field called `_id` is added with this information. You
+can configure your (Logstash ES output)[https://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html]
+in the following way to take this value and use it as document identifier:
+```
+output {
+  elasticsearch {
+    ···
+    document_id => "%{[@metadata][_id]}"
+    ···
+  }
+}
+```
+
+### Fields based on S3 key
+If you are sending several origin logs to the same S3 bucket and you want to distinguish them on ElasticSearch,
+you can set a regular expression on `key_regex_fields` in order to parse S3 keys and add extracted fields to
+each event extracted from it.
+
+For instance, imagine you are sending production and testing logs to the same S3 bucket from your ALBs. In order
+to distinguish them, you added a prefix based on pattern `{environment}-{application}/` to your ALBs configuration.
+
+By default S3logsbeat is aware of this and generates events based on content, not from where them have been
+extracted. Due to that, you couldn't distinguish between production and testing logs. In order to make S3logsbeat
+aware of it, you have to configure your input as follows:
+```yaml
+s3logsbeat:
+  inputs:
+    - type: sqs
+      queues_url:
+        - https://sqs.{aws-region}.amazonaws.com/{account ID}/{queue name}
+      log_format: alb
+      key_regex_fields: ^(?P<environment>[^\-]+)-(?P<application>[^/\-]+)
+      poll_frequency: 1m
+```
+
+### Delayed shutdown
+By default, when S3logsbeat is stopped, SQS messages being processed are cancelled. It is not problematic because
+SQS message is not deleted until all events are present on output. Due to that, when you starts S3logsbeat again,
+SQS message cancelled is processed again. That combined with no duplicate events produces the same events on
+ElasticSearch as if initial message would be processed entirely.
+
+However, we are doing the same process again on the same SQS message and the same S3 objects associated with it. In
+order to avoid it, we can configure a shutdown timeout as follows:
+```yaml
+s3logsbeat:
+  shutdown_timeout: 5s
+```
+
+Then, when S3logsbeat is stopped, it stops to process new SQS messages and waits until (what happens first):
+1) All current SQS messages are processed, or
+2) Timeout expires
+
+First case is the typical one when everything is ok because an SQS message is processed in less than a second and we have not to repeat the same process.
+
+Second case can happen when we have a lot of S3 objects on pending SQS messages. This case is similar to the one exposed initially when `shutdown_timeout` is not configured. It means, unprocessed S3 objects will be processed when S3logsbeat starts again.
+
+
+### Example of events
+
+#### ALB
+```
+{
+  "_index" : "yourindex-2018.09.14",
+  "_type" : "doc",
+  "_id" : "678d4e087033da5bc429c1834941b71868b1cb6c",
+  "_score" : 1.0,
+  "_source" : {
+    "@timestamp" : "2018-09-14T19:11:02.796Z",
+    "trace_id" : "Root=1-5b9c07c6-686bc18f187f75f58d06cd63",
+    "target_group_arn" : "arn:aws:elasticloadbalancing:region:123456789012:targetgroup/yourtg/f3b5cb16d14453e9",
+    "application" : "yourapp",
+    "beat" : {
+      "hostname" : "macbook-pro-4.home",
+      "version" : "6.0.2",
+      "name" : "macbook-pro-4.home"
+    },
+    "environment" : "yourenvironment",
+    "client_port" : 37054,
+    "received_bytes" : 272,
+    "target_port" : 80,
+    "user_agent" : "cURL",
+    "request_url" : "https://www.example.com/",
+    "ssl_protocol" : "TLSv1.2",
+    "elb" : "app/yourenvironment-yourapp/ad4ceee8a897566c",
+    "request_proto" : "HTTP/1.0",
+    "response_processing_time" : 0,
+    "ssl_cipher" : "ECDHE-RSA-AES128-GCM-SHA256",
+    "client_ip" : "1.2.3.4",
+    "target_status_code" : 200,
+    "sent_bytes" : 11964,
+    "request_processing_time" : 0,
+    "elb_status_code" : 200,
+    "target_processing_time" : 0.049,
+    "request_verb" : "GET",
+    "type" : "https",
+    "target_ip" : "2.3.4.5"
+  }
+}
+```
+
+These fields corresond to the ones established by AWS on [this page](https://docs.aws.amazon.com/es_es/elasticloadbalancing/latest/application/load-balancer-access-logs.html).
+
+#### CloudFront
+Events generated from CloudFront logs are in the following form:
+```
+{
+  "_index" : "yourindex-2018.09.02",
+  "_type" : "doc",
+  "_id" : "4d2f4dceb5ed5b4a4300eccc657608a7cc57923d",
+  "_score" : 1.0,
+  "_source" : {
+    "@timestamp" : "2018-09-02T10:10:11.000Z",
+    "ssl_protocol" : "TLSv1.2",
+    "cs_protocol_version" : "HTTP/1.1",
+    "x_edge_response_result_type" : "Hit",
+    "cs_user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0",
+    "x_edge_request_id" : "9QuHsIZRJxPbF_F-3to6KberARZ7Ddd6wthSnivYJEWalJWqlYCe7A==",
+    "ssl_cipher" : "ECDHE-RSA-AES128-GCM-SHA256",
+    "x_edge_result_type" : "Hit",
+    "x_edge_location" : "MAD50",
+    "x_host_header" : "www.example.com",
+    "beat" : {
+      "name" : "macbook-pro-4.home",
+      "hostname" : "macbook-pro-4.home",
+      "version" : "6.0.2"
+    },
+    "cs_bytes" : 457,
+    "sc_status" : 200,
+    "cs_cookie" : "-",
+    "cs_protocol" : "https",
+    "cs_method" : "GET",
+    "cs_uri_stem" : "/",
+    "cs_host" : "d111111abcdef8.cloudfront.net",
+    "c_ip" : "1.2.3.4",
+    "time_taken" : 0.004,
+    "sc_bytes" : 1166
+  }
+}
+```
+
+These fields corresond to the ones established by AWS on [this page](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat).
 
 ## Getting Started with S3logsbeat
 
