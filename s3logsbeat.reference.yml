@@ -17,7 +17,7 @@ s3logsbeat:
       queues_url:
         - https://sqs.{aws-region}.amazonaws.com/{account ID}/{queue name}
       
-      # Format of logs. Options: 'alb', 'cloudfront'
+      # Format of logs. Options: 'elb', 'alb', 'cloudfront'
       log_format: alb
 
       # Optional fields extractor from key

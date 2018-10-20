@@ -33,7 +33,7 @@ S3logsbeat has the following features:
 * High availability: you can have several S3logsbeat running in parallel
 * Reliability: SQS messages are only deleted when output contains all events
 * Avoid duplicates on supported outputs
-* Supported S3 log parsers: ALB, CloudFront
+* Supported S3 log parsers: ELB, ALB, CloudFront
 * Extra fields based on S3 key
 * Delayed shutdown based on timout and pending messages to be acked by outputs
 * Limited amount of resources: ~20MB RAM in my tests

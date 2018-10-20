@@ -21,6 +21,12 @@ s3logsbeat:
       # Optional additional fields
       fields:
         environment: staging
+    -
+      type: sqs
+      queues_url:
+        - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueueForELB
+      log_format: elb
+      poll_frequency: 1m
 
 # Additional stuff we should be ignore
 output:

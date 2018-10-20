@@ -15,6 +15,8 @@ type LogParser interface {
 // GetPredefinedParser gets a predefined parser based on its name
 func GetPredefinedParser(n string) (LogParser, error) {
 	switch n {
+	case "elb":
+		return S3ELBLogParser, nil
 	case "alb":
 		return S3ALBLogParser, nil
 	case "cloudfront":
