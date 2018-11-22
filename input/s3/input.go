@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	err := input.Register("sqs", NewInput)
+	err := input.Register("s3", NewInput)
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +22,7 @@ type Input struct {
 	cfg       *common.Config
 	config    config
 	done      chan struct{}
-	out       chan *pipeline.SQS
+	out       chan *pipeline.S3List
 	logParser logparser.LogParser
 }
 
@@ -35,7 +35,7 @@ func NewInput(
 		config: defaultConfig,
 		cfg:    cfg,
 		done:   context.Done,
-		out:    context.OutSQS,
+		out:    context.OutS3List,
 	}
 
 	if err := cfg.Unpack(&p.config); err != nil {
@@ -56,11 +56,15 @@ func (p *Input) Run() {
 	logp.Debug("s3logsbeat", "Start next scan")
 	awsSession := aws.NewSession()
 
-	for _, queue := range p.config.QueuesURL {
-		sqs := pipeline.NewSQS(awsSession, &queue, p.logParser, p.config.KeyRegexFields, p.config.LogFormat)
+	for _, s3uri := range p.config.Buckets {
+		s3prefix, err := aws.NewS3ObjectFromURI(s3uri)
+		if err != nil {
+			logp.Critical("Couldn't parse S3 URI %s", s3uri)
+		}
+		s3list := pipeline.NewS3List(awsSession, s3prefix, p.logParser, p.config.KeyRegexFields, p.config.LogFormat)
 
 		select {
-		case p.out <- sqs:
+		case p.out <- s3list:
 		case <-p.done:
 			return
 		}

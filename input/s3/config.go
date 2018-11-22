@@ -12,7 +12,7 @@ var (
 
 type config struct {
 	input.GlobalConfig
-	QueuesURL []string `config:"queues_url"`
+	Buckets []string `config:"buckets"`
 }
 
 func (c *config) Validate() error {
@@ -20,8 +20,8 @@ func (c *config) Validate() error {
 		return err
 	}
 
-	if len(c.QueuesURL) == 0 {
-		return fmt.Errorf("No queues_url defined for sqs input")
+	if len(c.Buckets) == 0 {
+		return fmt.Errorf("No bucket defined for s3 input")
 	}
 	return nil
 }

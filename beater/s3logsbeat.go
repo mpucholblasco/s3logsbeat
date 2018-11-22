@@ -20,13 +20,14 @@ var (
 	keepSQSMessages = flag.Bool("keepsqsmessages", false, "Do not delete SQS messages when processed (set for testing)")
 )
 
+// S3logsbeat beater
 type S3logsbeat struct {
 	done   chan struct{}
 	config config.Config
 	client beat.Client
 }
 
-// Creates beater
+// New creates beater
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	config := config.DefaultConfig
 	if err := cfg.Unpack(&config); err != nil {
@@ -40,6 +41,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	return bt, nil
 }
 
+// Run runs beater
 func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	logp.Info("s3logsbeat is running! Hit CTRL-C to stop it.")
 
@@ -99,7 +101,8 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 		b.Info.Version,
 		bt.done,
 		*once,
-		pipelineChannels.GetSQSChannel())
+		pipelineChannels.GetSQSChannel(),
+		nil)
 	if err != nil {
 		logp.Err("Could not init crawler: %v", err)
 		return err
@@ -180,6 +183,7 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	return nil
 }
 
+// Stop stops beater
 func (bt *S3logsbeat) Stop() {
 	close(bt.done)
 }

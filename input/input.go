@@ -22,29 +22,32 @@ type Input interface {
 
 // Runner encapsulate the lifecycle of the input
 type Runner struct {
-	config   GlobalConfig
-	input    Input
-	done     chan struct{}
-	wg       *sync.WaitGroup
-	ID       uint64
-	Once     bool
-	beatDone chan struct{}
-	out      chan *pipeline.SQS
+	config    GlobalConfig
+	input     Input
+	done      chan struct{}
+	wg        *sync.WaitGroup
+	ID        uint64
+	Once      bool
+	beatDone  chan struct{}
+	outSQS    chan *pipeline.SQS
+	outS3List chan *pipeline.S3List
 }
 
 // New instantiates a new Runner
 func New(
 	conf *common.Config,
 	beatDone chan struct{},
-	out chan *pipeline.SQS,
+	outSQS chan *pipeline.SQS,
+	outS3List chan *pipeline.S3List,
 ) (*Runner, error) {
 	input := &Runner{
-		config:   defaultConfig,
-		wg:       &sync.WaitGroup{},
-		done:     make(chan struct{}),
-		Once:     false,
-		beatDone: beatDone,
-		out:      out,
+		config:    defaultConfig,
+		wg:        &sync.WaitGroup{},
+		done:      make(chan struct{}),
+		Once:      false,
+		beatDone:  beatDone,
+		outSQS:    outSQS,
+		outS3List: outS3List,
 	}
 
 	var err error
@@ -66,9 +69,10 @@ func New(
 	}
 
 	context := Context{
-		Done:     input.done,
-		BeatDone: input.beatDone,
-		Out:      input.out,
+		Done:      input.done,
+		BeatDone:  input.beatDone,
+		OutSQS:    input.outSQS,
+		OutS3List: input.outS3List,
 	}
 	var ipt Input
 	ipt, err = f(conf, context)
@@ -122,7 +126,7 @@ func (p *Runner) Run() {
 			logp.Info("input ticker stopped")
 			return
 		case <-time.After(p.config.PollFrequency):
-			logp.Debug("s3logsbeat", "Run input")
+			logp.Debug("s3logsbeat", "Tick on input with ID=%d", p.ID)
 			p.input.Run()
 		}
 	}

@@ -9,10 +9,12 @@ import (
 	"github.com/elastic/beats/libbeat/logp"
 )
 
+// Context input context
 type Context struct {
-	Done     chan struct{}
-	BeatDone chan struct{}
-	Out      chan *pipeline.SQS
+	Done      chan struct{}
+	BeatDone  chan struct{}
+	OutSQS    chan *pipeline.SQS
+	OutS3List chan *pipeline.S3List
 }
 
 // Factory is used to register functions creating new Input instances.
@@ -20,6 +22,7 @@ type Factory = func(config *common.Config, context Context) (Input, error)
 
 var registry = make(map[string]Factory)
 
+// Register registers an input
 func Register(name string, factory Factory) error {
 	logp.Info("Registering input factory")
 	if name == "" {
@@ -38,6 +41,7 @@ func Register(name string, factory Factory) error {
 	return nil
 }
 
+// GetFactory gets a factory from a name
 func GetFactory(name string) (Factory, error) {
 	if _, exists := registry[name]; !exists {
 		return nil, fmt.Errorf("Error creating input. No such input type exist: '%v'", name)

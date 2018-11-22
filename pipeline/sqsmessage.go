@@ -82,7 +82,7 @@ func (s *SQSMessage) deleteOnJobCompleted() {
 func (s *SQSMessage) delete() {
 	if !s.keepOnCompleted {
 		if err := s.sqs.DeleteMessage(s.ReceiptHandle); err != nil {
-			logp.Err("Couldn't delete SQS message with ID %s. Error: %v", s.MessageId, err)
+			logp.Err("Couldn't delete SQS message with ID %s. Error: %v", *s.MessageId, err)
 		}
 	}
 	for _, c := range s.onDeleteCallbacks {

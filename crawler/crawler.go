@@ -22,18 +22,20 @@ type Crawler struct {
 	once         bool
 	beatVersion  string
 	beatDone     chan struct{}
-	out          chan *pipeline.SQS
+	outSQS       chan *pipeline.SQS
+	outS3List    chan *pipeline.S3List
 }
 
 // New creates a new crawler
-func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, out chan *pipeline.SQS) (*Crawler, error) {
+func New(inputConfigs []*common.Config, beatVersion string, beatDone chan struct{}, once bool, outSQS chan *pipeline.SQS, outS3List chan *pipeline.S3List) (*Crawler, error) {
 	return &Crawler{
 		inputs:       map[uint64]*input.Runner{},
 		inputConfigs: inputConfigs,
 		once:         once,
 		beatVersion:  beatVersion,
 		beatDone:     beatDone,
-		out:          out,
+		outSQS:       outSQS,
+		outS3List:    outS3List,
 	}, nil
 }
 
@@ -60,7 +62,7 @@ func (c *Crawler) startInput(
 		return nil
 	}
 
-	p, err := input.New(config, c.beatDone, c.out)
+	p, err := input.New(config, c.beatDone, c.outSQS, c.outS3List)
 	if err != nil {
 		return fmt.Errorf("Error in initing input: %s", err)
 	}

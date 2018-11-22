@@ -1,6 +1,13 @@
 package aws
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
+
+var (
+	s3uriRE = regexp.MustCompile(`s3://([^/]+)/?(.*)`)
+)
 
 // S3Object represents an object on S3
 type S3Object struct {
@@ -14,6 +21,12 @@ func NewS3Object(bucket, key string) *S3Object {
 		Bucket: bucket,
 		Key:    key,
 	}
+}
+
+// NewS3ObjectFromURI creates a new S3 object from a URI with format:
+// s3://bucket/path
+func NewS3ObjectFromURI(uri string) (*S3Object, error) {
+	return nil, nil
 }
 
 // String converts current object into string

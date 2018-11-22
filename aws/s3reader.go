@@ -21,6 +21,8 @@ type s3readcloser struct {
 	c []io.Closer
 }
 
+type s3ObjectHandler func(*S3Object) error
+
 // NewS3 is a construct function for creating the object
 // with session
 func NewS3(session *session.Session) *S3 {
@@ -43,6 +45,24 @@ func (s *S3) GetReadCloser(o *S3Object) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return newS3ReadCloser(output.Body, o.Key)
+}
+
+// ListObjects lists objects present on o.Bucket and prefix o.Key
+func (s *S3) ListObjects(o *S3Object, oh s3ObjectHandler) (int, error) {
+	received := 0
+	err := s.client.ListObjectsPages(&s3.ListObjectsInput{
+		Bucket: aws.String(o.Bucket),
+		Prefix: aws.String(o.Key),
+	}, func(res *s3.ListObjectsOutput, last bool) (shouldContinue bool) {
+		received += len(res.Contents)
+		for _, r := range res.Contents {
+			if err := oh(NewS3Object(o.Bucket, *r.Key)); err != nil {
+				return false
+			}
+		}
+		return true
+	})
+	return received, err
 }
 
 func newS3ReadCloser(i io.ReadCloser, key string) (io.ReadCloser, error) {
