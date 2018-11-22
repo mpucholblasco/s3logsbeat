@@ -22,7 +22,7 @@ type Input interface {
 
 // Runner encapsulate the lifecycle of the input
 type Runner struct {
-	config   InputConfig
+	config   GlobalConfig
 	input    Input
 	done     chan struct{}
 	wg       *sync.WaitGroup

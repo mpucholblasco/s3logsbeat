@@ -8,17 +8,22 @@ import (
 	cfg "github.com/mpucholblasco/s3logsbeat/config"
 )
 
-type InputConfig struct {
-	QueuesURL      []string          `config:"queues_url"`
-	LogFormat      string            `config:"log_format" validate:"required"`
+// GlobalConfig global config for all kind of inputs
+type GlobalConfig struct {
 	Type           string            `config:"type" validate:"required"`
-	KeyRegexFields *regexp.Regexp    `config:"key_regex_fields"`
 	PollFrequency  time.Duration     `config:"poll_frequency" validate:"required,min=0,nonzero"`
+	LogFormat      string            `config:"log_format" validate:"required"`
+	KeyRegexFields *regexp.Regexp    `config:"key_regex_fields"`
 	Fields         map[string]string `config:"fields"`
 }
 
 var (
-	defaultConfig = InputConfig{
+	defaultConfig = GlobalConfig{
 		Type: cfg.DefaultType,
 	}
 )
+
+// Validate validates global config logic
+func (c *GlobalConfig) Validate() error {
+	return nil
+}

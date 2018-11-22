@@ -1,9 +1,9 @@
-package log
+package sqs
 
 import (
 	"fmt"
-	"regexp"
-	"time"
+
+	"github.com/mpucholblasco/s3logsbeat/input"
 )
 
 var (
@@ -11,15 +11,15 @@ var (
 )
 
 type config struct {
+	input.GlobalConfig
 	QueuesURL      []string          `config:"queues_url"`
-	LogFormat      string            `config:"log_format" validate:"required"`
-	Type           string            `config:"type" validate:"required"`
-	KeyRegexFields *regexp.Regexp    `config:"key_regex_fields"`
-	PollFrequency  time.Duration     `config:"poll_frequency" validate:"required,min=0,nonzero"`
-	Fields         map[string]string `config:"fields"`
 }
 
 func (c *config) Validate() error {
+	if err := c.GlobalConfig.Validate(); err != nil {
+		return err
+	}
+	
 	if len(c.QueuesURL) == 0 {
 		return fmt.Errorf("No QueuesURL were defined for input")
 	}

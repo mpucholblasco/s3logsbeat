@@ -1,4 +1,4 @@
-package log
+package sqs
 
 import (
 	"github.com/mpucholblasco/s3logsbeat/aws"
