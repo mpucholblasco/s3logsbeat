@@ -11,8 +11,8 @@ var (
 )
 
 type config struct {
-	input.GlobalConfig
-	Buckets []string `config:"buckets"`
+	input.GlobalConfig `config:",inline"`
+	Buckets            []string `config:"buckets"`
 }
 
 func (c *config) Validate() error {

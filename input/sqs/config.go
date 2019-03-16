@@ -11,8 +11,8 @@ var (
 )
 
 type config struct {
-	input.GlobalConfig
-	QueuesURL []string `config:"queues_url"`
+	input.GlobalConfig `config:",inline"`
+	QueuesURL          []string `config:"queues_url"`
 }
 
 func (c *config) Validate() error {
