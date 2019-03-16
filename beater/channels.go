@@ -11,7 +11,7 @@ import (
 
 type registrarLogger struct {
 	done chan struct{}
-	ch   chan<- []*pipeline.SQSMessage
+	ch   chan<- []pipeline.S3ObjectProcessNotifications
 }
 
 type finishedLogger struct {
@@ -35,7 +35,7 @@ func newRegistrarLogger(reg *registrar.Registrar) *registrarLogger {
 
 func (l *registrarLogger) Close() { close(l.done) }
 
-func (l *registrarLogger) Published(sqsMessages []*pipeline.SQSMessage) {
+func (l *registrarLogger) Published(privateElements []pipeline.S3ObjectProcessNotifications) {
 	select {
 	case <-l.done:
 		// set ch to nil, so no more events will be send after channel close signal
@@ -43,7 +43,7 @@ func (l *registrarLogger) Published(sqsMessages []*pipeline.SQSMessage) {
 		// Note: nil channels will block, so only done channel will be actively
 		//       report 'closed'.
 		l.ch = nil
-	case l.ch <- sqsMessages:
+	case l.ch <- privateElements:
 	}
 }
 

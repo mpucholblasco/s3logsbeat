@@ -42,6 +42,9 @@ func NewInput(
 		return nil, err
 	}
 
+	// TODO create NewS3ReaderInformation here instead of logparser and so on... in this way we can reuse it
+	// on all calls
+
 	var err error
 	p.logParser, err = logparser.GetPredefinedParser(p.config.LogFormat)
 	if err != nil {
@@ -57,7 +60,8 @@ func (p *Input) Run() {
 	awsSession := aws.NewSession()
 
 	for _, queue := range p.config.QueuesURL {
-		sqs := pipeline.NewSQS(awsSession, &queue, p.logParser, p.config.KeyRegexFields, p.config.LogFormat)
+		ri := pipeline.NewS3ReaderInformation(p.logParser, p.config.KeyRegexFields, p.config.LogFormat)
+		sqs := pipeline.NewSQS(awsSession, &queue, ri)
 
 		select {
 		case p.out <- sqs:

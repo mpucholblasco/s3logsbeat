@@ -46,33 +46,6 @@ func (s *SQSMessage) OnDelete(f func()) {
 	s.onDeleteCallbacks = append(s.onDeleteCallbacks, f)
 }
 
-// S3ObjectProcessed reduces the number of pending S3 objects to process and executed DeleteOnJobCompleted
-func (s *SQSMessage) S3ObjectProcessed() {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.s3objects--
-	s.deleteOnJobCompleted()
-}
-
-// AddEvents adds the number of events to the counter (to know the number of events pending to ACK)
-func (s *SQSMessage) AddEvents(c uint64) {
-	s.mutex.Lock()
-	s.events += c
-	s.mutex.Unlock()
-}
-
-// EventsProcessed reduces the number of events to the counter (to know the number of events pending to ACK).
-// If all events have been processed, the SQS message is deleted.
-func (s *SQSMessage) EventsProcessed(c uint64) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.events -= c
-	if s.events < 0 {
-		panic(fmt.Sprintf("Acked %d more events than added", -s.events))
-	}
-	s.deleteOnJobCompleted()
-}
-
 func (s *SQSMessage) deleteOnJobCompleted() {
 	if s.s3objects == 0 && s.events == 0 {
 		s.delete()
@@ -102,7 +75,7 @@ func (s *SQSMessage) ExtractNewS3Objects(mh func(s3object *S3Object) error) erro
 
 	s3event := aws.NewSQSMessageS3Event(s.SQSMessage)
 	c, err := s3event.ExtractNewObjects(func(awsS3Object *aws.S3Object) error {
-		return mh(NewS3Object(awsS3Object, s))
+		return mh(NewS3Object(awsS3Object, s.sqs.S3ReaderInformation, s))
 	})
 
 	if err != nil {
@@ -116,4 +89,33 @@ func (s *SQSMessage) ExtractNewS3Objects(mh func(s3object *S3Object) error) erro
 		s.s3objects += c
 	}
 	return nil
+}
+
+// S3ObjectProcessNotifications implementations
+
+// S3ObjectProcessed reduces the number of pending S3 objects to process and executed DeleteOnJobCompleted
+func (s *SQSMessage) S3ObjectProcessed() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.s3objects--
+	s.deleteOnJobCompleted()
+}
+
+// EventSent adds the number of events to the counter (to know the number of events pending to ACK)
+func (s *SQSMessage) EventSent() {
+	s.mutex.Lock()
+	s.events++
+	s.mutex.Unlock()
+}
+
+// EventACKed reduces the number of events to the counter (to know the number of events pending to ACK).
+// If all events have been processed, the SQS message is deleted.
+func (s *SQSMessage) EventACKed() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.events--
+	if s.events < 0 {
+		panic(fmt.Sprintf("Acked %d more events than added", -s.events))
+	}
+	s.deleteOnJobCompleted()
 }

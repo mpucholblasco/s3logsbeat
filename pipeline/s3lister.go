@@ -66,7 +66,7 @@ func (w *S3ListerWorker) onS3List(workerID int, s3 *S3List) {
 		case <-w.done:
 			logp.Info("Cancelling ListS3Objects")
 			return fmt.Errorf("Cancelling")
-		case w.out <- NewS3Object(s3object, nil):
+		case w.out <- NewS3Object(s3object, s3.S3ReaderInformation, NewS3ObjectProcessNotificationsIgnorer()):
 			w.wgS3Objects.Add(1)
 		}
 		return nil

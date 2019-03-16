@@ -153,3 +153,8 @@ func (p *Runner) stop() {
 func (p *Runner) String() string {
 	return fmt.Sprintf("input [type=%s, ID=%d]", p.config.Type, p.ID)
 }
+
+// Type gets the input type
+func (p *Runner) Type() string {
+	return p.config.Type
+}

@@ -69,7 +69,7 @@ func (w *S3ReaderWorker) Start() {
 }
 
 func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *S3Object) {
-	keyFields, err := s3object.GetKeyFields()
+	keyFields, err := s3object.GetKeyFields(s3object.Key)
 	if err != nil {
 		logp.Warn("Get key fields error. Ignoring. Error: %v", err)
 	}
@@ -78,10 +78,11 @@ func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *S3Object
 		if event.Meta == nil {
 			event.Meta = common.MapStr{}
 		}
-		event.Meta["format"] = s3object.sqsMessage.sqs.metadataType
-		event.Private = s3object.sqsMessage // store to reduce on ACK function
+		event.Meta["format"] = s3object.GetMetadataType()
+		// TODO change by agnostic object (which implements registrar.PrivateElement interface)
+		event.Private = s3object.s3ObjectProcessNotifications // store to reduce on ACK function
 		event.Fields.Update(*keyFields)
-		s3object.sqsMessage.AddEvents(1)
+		s3object.s3ObjectProcessNotifications.EventSent()
 		w.wgEvents.Add(1)
 		w.out.Publish(*event)
 	}
@@ -97,14 +98,14 @@ func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *S3Object
 		logp.Err("Could not download S3 object %s", s3object.String())
 	} else {
 		defer readCloser.Close()
-		s3object.sqsMessage.sqs.logParser.Parse(readCloser, onLogParserSucceed, onLogParserError)
+		s3object.GetLogParser().Parse(readCloser, onLogParserSucceed, onLogParserError)
 	}
 
 	// Monitoring
 	w.wgS3Objects.Done()
 
 	// Counting how much remaining events are on this SQS message to delete it when all will be processed
-	s3object.sqsMessage.S3ObjectProcessed()
+	s3object.s3ObjectProcessNotifications.S3ObjectProcessed()
 }
 
 // Wait waits until all workers have finished
