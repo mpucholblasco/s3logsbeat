@@ -50,10 +50,11 @@ func (s *S3) GetReadCloser(o *S3Object) (io.ReadCloser, error) {
 // ListObjects lists objects present on o.Bucket and prefix o.Key
 func (s *S3) ListObjects(o *S3Object, oh s3ObjectHandler) (int, error) {
 	received := 0
-	err := s.client.ListObjectsPages(&s3.ListObjectsInput{
+	s3ListObjectsInput := &s3.ListObjectsInput{
 		Bucket: aws.String(o.Bucket),
 		Prefix: aws.String(o.Key),
-	}, func(res *s3.ListObjectsOutput, last bool) (shouldContinue bool) {
+	}
+	err := s.client.ListObjectsPages(s3ListObjectsInput, func(res *s3.ListObjectsOutput, last bool) (shouldContinue bool) {
 		received += len(res.Contents)
 		for _, r := range res.Contents {
 			if err := oh(NewS3Object(o.Bucket, *r.Key)); err != nil {

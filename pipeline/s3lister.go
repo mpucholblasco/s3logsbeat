@@ -72,17 +72,10 @@ func (w *S3ListerWorker) onS3List(workerID int, s3 *S3List) {
 		return nil
 	}
 
-	for {
-		select {
-		case <-w.done:
-			return
-		default:
-			if objectsReceived, err := s3.ListObjects(s3.s3prefix, onS3Object); err != nil {
-				logp.Err("Could not list S3 object from S3 prefix URI %s. Error: %v", s3.s3prefix.String(), err)
-			} else {
-				logp.Debug("s3logsbeat", "Received %d S3 objects from S3 prefix URI %s", objectsReceived, s3.s3prefix.String())
-			}
-		}
+	if objectsReceived, err := s3.ListObjects(s3.s3prefix, onS3Object); err != nil {
+		logp.Err("Could not list S3 object from S3 prefix URI %s. Error: %v", s3.s3prefix.String(), err)
+	} else {
+		logp.Debug("s3logsbeat", "Received %d S3 objects from S3 prefix URI %s", objectsReceived, s3.s3prefix.String())
 	}
 }
 

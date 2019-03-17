@@ -17,6 +17,7 @@ func NewS3List(session *session.Session, s3prefix *aws.S3Object, ri *S3ReaderInf
 	return &S3List{
 		S3:                  aws.NewS3(session),
 		S3ReaderInformation: ri,
+		s3prefix:            s3prefix,
 	}
 }
 
