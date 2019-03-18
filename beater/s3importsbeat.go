@@ -127,12 +127,12 @@ func (bt *S3importsbeat) Run(b *beat.Beat) error {
 	waitFinished.Wait()
 
 	crawler.Stop()
+	s3listerWorker.Stop()
 
 	timeout := bt.config.ShutdownTimeout
 
 	// Checks if on shutdown it should wait for all events to be published
 	waitEvents.Add(withLog(func() {
-		s3listerWorker.Wait()
 		pipelineChannels.CloseS3Channel()
 		s3readerWorker.Wait()
 		wgEvents.Wait()
@@ -153,7 +153,6 @@ func (bt *S3importsbeat) Run(b *beat.Beat) error {
 	logp.Debug("s3logsbeat", "Waiting for all events to be processed or timeout")
 	waitEvents.Wait()
 
-	s3listerWorker.Stop()
 	bt.client.Close() // unlock publish events (if locked)
 	s3readerWorker.Stop()
 

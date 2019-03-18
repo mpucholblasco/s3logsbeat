@@ -110,7 +110,7 @@ func (w *SQSConsumerWorker) onSQSNotification(workerID int, sqs *SQS) {
 	}
 }
 
-// StopAcceptingMessages sends notification to stop to workers and wait untill all workers finish
+// StopAcceptingMessages sends notification to stop to workers and wait until all workers finish
 func (w *SQSConsumerWorker) StopAcceptingMessages() {
 	logp.Debug("s3logsbeat", "SQS consumers not accepting more messages")
 	w.in = nil
