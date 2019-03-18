@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/mpucholblasco/s3logsbeat/aws"
 )
@@ -9,15 +11,18 @@ import (
 type S3List struct {
 	*aws.S3
 	*S3ReaderInformation
-	s3prefix *aws.S3Object
+	s3prefix  *aws.S3Object
+	since, to time.Time
 }
 
 // NewS3List creates a new S3 to be sent thru pipeline
-func NewS3List(session *session.Session, s3prefix *aws.S3Object, ri *S3ReaderInformation) *S3List {
+func NewS3List(session *session.Session, s3prefix *aws.S3Object, ri *S3ReaderInformation, since, to time.Time) *S3List {
 	return &S3List{
 		S3:                  aws.NewS3(session),
 		S3ReaderInformation: ri,
 		s3prefix:            s3prefix,
+		since:               since,
+		to:                  to,
 	}
 }
 

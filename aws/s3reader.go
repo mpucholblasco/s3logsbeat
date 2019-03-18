@@ -21,7 +21,7 @@ type s3readcloser struct {
 	c []io.Closer
 }
 
-type s3ObjectHandler func(*S3Object) error
+type s3ObjectHandler func(*S3ObjectWithOriginal) error
 
 // NewS3 is a construct function for creating the object
 // with session
@@ -57,7 +57,7 @@ func (s *S3) ListObjects(o *S3Object, oh s3ObjectHandler) (int, error) {
 	err := s.client.ListObjectsPages(s3ListObjectsInput, func(res *s3.ListObjectsOutput, last bool) (shouldContinue bool) {
 		received += len(res.Contents)
 		for _, r := range res.Contents {
-			if err := oh(NewS3Object(o.Bucket, *r.Key)); err != nil {
+			if err := oh(NewS3ObjectWithOriginal(o.Bucket, r)); err != nil {
 				return false
 			}
 		}

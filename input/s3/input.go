@@ -62,7 +62,7 @@ func (p *Input) Run() {
 			logp.Critical("Couldn't parse S3 URI %s", s3uri)
 		}
 		ri := pipeline.NewS3ReaderInformation(p.logParser, p.config.KeyRegexFields, p.config.LogFormat)
-		s3list := pipeline.NewS3List(awsSession, s3prefix, ri)
+		s3list := pipeline.NewS3List(awsSession, s3prefix, ri, p.config.Since, p.config.To)
 
 		select {
 		case p.out <- s3list:

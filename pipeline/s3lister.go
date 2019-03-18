@@ -59,15 +59,27 @@ func (w *S3ListerWorker) Start() {
 // onS3ListNotification Reads S3 objects from a bucket and prefix
 func (w *S3ListerWorker) onS3List(workerID int, s3 *S3List) {
 	logp.Debug("s3logsbeat", "Listening S3 objects present on S3 prefix URI %s", s3.s3prefix.String())
-
-	onS3Object := func(s3object *aws.S3Object) error {
-		// Using a select because w.out could be full
+	onS3Object := func(o *aws.S3ObjectWithOriginal) error {
+		// Case in which we have a lot of filtered S3 files and we want to cancel the process
 		select {
 		case <-w.done:
 			logp.Info("Cancelling ListS3Objects")
 			return fmt.Errorf("Cancelling")
-		case w.out <- NewS3Object(s3object, s3.S3ReaderInformation, NewS3ObjectProcessNotificationsIgnorer()):
-			w.wgS3Objects.Add(1)
+		default:
+		}
+		if o.LastModified.After(s3.since) && o.LastModified.Before(s3.to) {
+			// Using a select because w.out could be full
+			select {
+			case <-w.done:
+				logp.Info("Cancelling ListS3Objects")
+				return fmt.Errorf("Cancelling")
+			case w.out <- NewS3Object(o.S3Object, s3.S3ReaderInformation, NewS3ObjectProcessNotificationsIgnorer()):
+				w.wgS3Objects.Add(1)
+			}
+		} else {
+			if logp.IsDebug("s3logsbeat") {
+				logp.Debug("s3logsbeat", "Filtering key s3://%s/%s because does not fit with timestamp (%s) filters (since=%s,to=%s)", o.Bucket, o.S3Object.Key, o.LastModified, s3.since.UTC(), s3.to.UTC())
+			}
 		}
 		return nil
 	}

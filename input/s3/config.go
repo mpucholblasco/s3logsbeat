@@ -30,14 +30,20 @@ func (c *config) Validate() error {
 		return fmt.Errorf("No bucket defined for s3 input")
 	}
 
-	c.Since, err = time.Parse(time.RFC3339Nano, c.SinceStr)
-	if err != nil {
-		return err
+	if c.SinceStr != "" {
+		c.Since, err = time.Parse(time.RFC3339Nano, c.SinceStr)
+		if err != nil {
+			return err
+		}
 	}
 
-	c.To, err = time.Parse(time.RFC3339Nano, c.ToStr)
-	if err != nil {
-		return err
+	if c.ToStr == "" {
+		c.To = time.Unix(1<<63-62135596801, 999999999)
+	} else {
+		c.To, err = time.Parse(time.RFC3339Nano, c.ToStr)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

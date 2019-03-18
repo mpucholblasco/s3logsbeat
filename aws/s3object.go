@@ -3,6 +3,8 @@ package aws
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 var (
@@ -41,4 +43,21 @@ func NewS3ObjectFromURI(uri string) (*S3Object, error) {
 // String converts current object into string
 func (s *S3Object) String() string {
 	return fmt.Sprintf("S3Object{Bucket:%s, Key: %s}", s.Bucket, s.Key)
+}
+
+// S3ObjectWithOriginal represents an object on S3 and includes information from original
+type S3ObjectWithOriginal struct {
+	*s3.Object
+	*S3Object
+}
+
+// NewS3ObjectWithOriginal creates a new S3 object which includes the original obtained from AWS
+func NewS3ObjectWithOriginal(bucket string, original *s3.Object) *S3ObjectWithOriginal {
+	return &S3ObjectWithOriginal{
+		original,
+		&S3Object{
+			Bucket: bucket,
+			Key:    *original.Key,
+		},
+	}
 }
