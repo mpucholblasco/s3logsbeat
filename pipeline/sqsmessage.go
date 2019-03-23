@@ -54,6 +54,7 @@ func (s *SQSMessage) deleteOnJobCompleted() {
 
 func (s *SQSMessage) delete() {
 	if !s.keepOnCompleted {
+		logp.Debug("s3logsbeat", "Deleting SQS message with ID %s because it has been fully processed", *s.MessageId)
 		if err := s.sqs.DeleteMessage(s.ReceiptHandle); err != nil {
 			logp.Err("Couldn't delete SQS message with ID %s. Error: %v", *s.MessageId, err)
 		}
