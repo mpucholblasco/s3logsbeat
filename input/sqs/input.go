@@ -42,9 +42,6 @@ func NewInput(
 		return nil, err
 	}
 
-	// TODO create NewS3ReaderInformation here instead of logparser and so on... in this way we can reuse it
-	// on all calls
-
 	var err error
 	p.logParser, err = logparser.GetPredefinedParser(p.config.LogFormat)
 	if err != nil {

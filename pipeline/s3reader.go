@@ -79,8 +79,7 @@ func (w *S3ReaderWorker) onS3ObjectFromSQSMessage(s3 *aws.S3, s3object *S3Object
 			event.Meta = common.MapStr{}
 		}
 		event.Meta["format"] = s3object.GetMetadataType()
-		// TODO change by agnostic object (which implements registrar.PrivateElement interface)
-		event.Private = s3object.s3ObjectProcessNotifications // store to reduce on ACK function
+		event.Private = s3object.s3ObjectProcessNotifications // store to send ACK on complete
 		event.Fields.Update(*keyFields)
 		s3object.s3ObjectProcessNotifications.EventSent()
 		w.wgEvents.Add(1)
