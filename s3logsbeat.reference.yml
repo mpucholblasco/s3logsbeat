@@ -29,6 +29,17 @@ s3logsbeat:
       # Poll frequency
       poll_frequency: 1m
 
+    # S3 inputs (only taken into account when command `s3import` is executed)
+    -
+      type: s3
+      # S3
+      buckets:
+        - s3://mybucket/mypath
+      log_format: alb
+      # Optional fields extractor from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
+      key_regex_fields: ^(?P<environment>[^\-]+)-(?P<application>[^/]+)/(?P<awsregion>[^/]+)
+      since: 2018-10-15T01:00 # ISO8601 format - optional
+      to: 2018-11-20T01:00 # ISO8601 format - optional
 #================================ General ======================================
 
 # The name of the shipper that publishes the network data. It can be used to group

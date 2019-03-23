@@ -7,7 +7,7 @@ s3logsbeat:
       buckets:
         - s3://mybucket/mypath
       log_format: alb
-      # Optional fields extracter from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
+      # Optional fields extractor from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
       key_regex_fields: ^(?P<environment>[^\-]+)-(?P<application>[^/]+)/(?P<awsregion>[^/]+)
       since: 2018-10-15T01:00 # ISO8601 format - optional
       to: 2018-11-20T01:00 # ISO8601 format - optional

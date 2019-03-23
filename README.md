@@ -159,6 +159,36 @@ IAM policy:
 }
 ```
 
+### Initial import
+You may already have S3 log files when you configure an SQS queue to import new files via `s3logsbeat`. If this is the case,
+you can import those files by using the command `s3imports` and a configuration file as this:
+```yaml
+s3logsbeat:
+  inputs:
+    # S3 inputs (only taken into account when command `s3import` is executed)
+    -
+      type: s3
+      # S3
+      buckets:
+        - s3://mybucket/mypath
+      log_format: alb
+      # Optional fields extractor from key. E.g. key=staging-myapp/eu-west-1/2018/06/01/
+      key_regex_fields: ^(?P<environment>[^\-]+)-(?P<application>[^/]+)/(?P<awsregion>[^/]+)
+      since: 2018-10-15T01:00 # ISO8601 format - optional
+      to: 2018-11-20T01:00 # ISO8601 format - optional
+```
+
+Using command `./s3logsbeat s3imports -c config.yml` you can import all those S3 files that you already have on S3. This command
+is not executed as a daemon and exits when all S3 objects are processed. Those SQS inputs present on configuration will be
+ignored when command `s3imports` is executed.
+
+This command is useful on first import, however, you should take care because in combination with standard mode of `s3logsbeat`
+can generate duplicates. In order to avoid this problem you can:
+* Use `@metadata._id` in order to avoid duplicates on ElasticSearch (see section [Avoid duplicates](#avoid-duplicates)).
+* Configure the SQS queue and S3 event notifications. Wait until the first element is present on the queue. Via console or
+  cli, analyse the element present on the SQS queue without deleting it (it will reappear later). Then edit yaml configuration
+  and set the `to` property to just one second before the one obtained and execute `s3imports` command.
+
 ### Example of events
 
 #### ALB
