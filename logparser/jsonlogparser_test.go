@@ -154,9 +154,6 @@ func TestJSONLogParser(t *testing.T) {
 		},
 	}
 	errorLinesExpected := []string{}
-	logParser := NewJSONLogParser("timestamp", kindElement{
-		kind: kindTimeUnixMilliseconds,
-		name: "timeUnixMilliseconds",
-	})
+	logParser := NewJSONLogParser("timestamp", mustKindFromString("timeUnixMilliseconds"))
 	assertLogParser(t, logParser, &logs, expected, errorLinesExpected)
 }

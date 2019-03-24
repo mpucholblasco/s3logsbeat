@@ -168,6 +168,14 @@ func kindMapStringToType(o map[string]string) (map[string]kindElement, error) {
 	return r, nil
 }
 
+func mustKindFromString(v string) kindElement {
+	r, err := kindFromString(v)
+	if err != nil {
+		panic(`parser: mustKindFromString error: ` + err.Error())
+	}
+	return r
+}
+
 func kindFromString(v string) (kindElement, error) {
 	if kind, ok := kindStringMap[v]; ok {
 		return kind, nil
@@ -183,6 +191,9 @@ func kindFromString(v string) (kindElement, error) {
 	}
 }
 
+// parseToKind parses a value to convert it into the kind passed as argument
+// NOTE: tried to impre performance (obtained ~46.5ns/op) by using functions inside kindElement
+// but it did it slower (~90ns/op)
 func parseToKind(e kindElement, value interface{}) (interface{}, error) {
 	switch e.kind {
 	case kindTimeLayout:

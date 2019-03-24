@@ -12,7 +12,6 @@ import (
 // KindMapStringToType & MustKindMapStringToType tests
 func TestCustomLogParserKindMapStringToTypeCorrect(t *testing.T) {
 	m := map[string]string{
-		"timeLayout":     "time:2006-01-02\t15:04:05",
 		"time":           "timeISO8601",
 		"int":            "int",
 		"int8":           "int8",
@@ -25,7 +24,6 @@ func TestCustomLogParserKindMapStringToTypeCorrect(t *testing.T) {
 		"deepurlencoded": "deepurlencoded",
 	}
 	expected := map[string]kindElement{
-		"timeLayout":     kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02\t15:04:05", name: "time layout (2006-01-02\t15:04:05)"},
 		"time":           kindMap[kindTimeISO8601],
 		"int":            kindMap[kindInt],
 		"int8":           kindMap[kindInt8],
@@ -40,7 +38,9 @@ func TestCustomLogParserKindMapStringToTypeCorrect(t *testing.T) {
 
 	value, err := kindMapStringToType(m)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, value)
+	for k, v := range value {
+		assert.Equal(t, v.kind, expected[k].kind)
+	}
 	assert.NotPanics(t, func() {
 		mustKindMapStringToType(m)
 	})
@@ -74,11 +74,6 @@ func TestCustomLogParserParseToKindsWithNoErrors(t *testing.T) {
 		value   interface{}
 	}
 	elems := []elem{
-		elem{
-			kind:    kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02\t15:04:05"},
-			inValue: "2014-05-23\t01:15:18",
-			value:   time.Date(2014, 5, 23, 1, 15, 18, 0, time.UTC),
-		},
 		elem{
 			kind:    kindMap[kindTimeISO8601],
 			inValue: "2016-08-10T22:08:42.945958Z",
@@ -255,16 +250,41 @@ func TestCustomLogParserParseToKindsWithNoErrors(t *testing.T) {
 	}
 }
 
+func TestTimePattern(t *testing.T) {
+	k, e := kindFromString("time:2006-01-02\t15:04:05")
+	assert.NoError(t, e)
+
+	in := "2014-05-23\t01:15:18"
+	expected := time.Date(2014, 5, 23, 1, 15, 18, 0, time.UTC)
+	result, e := parseToKind(k, in)
+	assert.NoError(t, e)
+	assert.Equal(t, expected, result)
+}
+
+func TestTimePatternError(t *testing.T) {
+	k, e := kindFromString("time:2006-01-02 15:04:05")
+	assert.NoError(t, e)
+
+	in := "3 Feb 2014 01:14:18"
+	_, e = parseToKind(k, in)
+	assert.Error(t, e)
+}
+
+func TestTimePatternInvalidType(t *testing.T) {
+	k, e := kindFromString("time:2006-01-02 15:04:05")
+	assert.NoError(t, e)
+
+	in := 123456
+	_, e = parseToKind(k, in)
+	assert.Error(t, e)
+}
+
 func TestCustomLogParserParseToKindsWithParseErrors(t *testing.T) {
 	type elem struct {
 		kind    kindElement
 		inValue interface{}
 	}
 	elems := []elem{
-		elem{
-			kind:    kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02 15:04:05"},
-			inValue: "3 Feb 2014 01:14:18",
-		},
 		elem{
 			kind:    kindMap[kindTimeISO8601],
 			inValue: "true",
@@ -340,10 +360,6 @@ func TestCustomLogParserParseToKindsWithInvalidType(t *testing.T) {
 	}
 	elems := []elem{
 		elem{
-			kind:    kindElement{kind: kindTimeLayout, kindExtra: "2006-01-02 15:04:05"},
-			inValue: 123456,
-		},
-		elem{
 			kind:    kindMap[kindTimeISO8601],
 			inValue: true,
 		},
@@ -408,5 +424,12 @@ func TestCustomLogParserParseToKindsWithInvalidType(t *testing.T) {
 	for _, e := range elems {
 		_, err := parseToKind(e.kind, e.inValue)
 		assert.Error(t, err)
+	}
+}
+
+func BenchmarkParseToKind(b *testing.B) {
+	// old : 45.9 ns/op, 45.7...
+	for n := 0; n < b.N; n++ {
+		parseToKind(kindElements[b.N%len(kindElements)], "in")
 	}
 }
