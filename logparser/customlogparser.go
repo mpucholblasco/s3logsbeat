@@ -107,7 +107,7 @@ LINE_READER:
 
 					if emptyValue, ok := c.emptyValues[name]; !ok || emptyValue != match[i] {
 						if k, ok := c.reKindMap[name]; ok {
-							if v, err := parseStringToKind(k, match[i]); err != nil {
+							if v, err := parseToKind(k, match[i]); err != nil {
 								eh(line, fmt.Errorf("Couldn't parse field (%s) to type (%s). Error: %+v", name, k.name, err))
 								continue LINE_READER
 							} else {
