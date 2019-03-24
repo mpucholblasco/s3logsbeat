@@ -76,9 +76,7 @@ func (j *JSONLogParser) getTimestamp(fields *map[string]interface{}) (time.Time,
 		return time.Time{}, fmt.Errorf("Couldn't find timestamp field %s", j.timestampField)
 	}
 
-	timestampStr := fmt.Sprintf("%v", timestampValue)
-
-	v, err := parseToKind(j.timestampKind, timestampStr)
+	v, err := parseToKind(j.timestampKind, timestampValue)
 	if err != nil {
 		return time.Time{}, err
 	}
