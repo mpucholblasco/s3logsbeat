@@ -2,8 +2,6 @@ package logparser
 
 import (
 	"bufio"
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"regexp"
@@ -124,15 +122,8 @@ LINE_READER:
 					continue LINE_READER
 				}
 				fields.Delete(c.timestampField)
-				h := sha1.New()
-				io.WriteString(h, line)
-				event := &beat.Event{
-					Timestamp: timestamp,
-					Fields:    fields,
-					Meta: common.MapStr{
-						"_id": hex.EncodeToString(h.Sum(nil)),
-					},
-				}
+
+				event := CreateEvent(&line, timestamp, fields)
 				mh(event)
 			}
 		}

@@ -3,8 +3,6 @@ package logparser
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha1"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,10 +13,31 @@ import (
 	"github.com/elastic/beats/libbeat/common/jsontransform"
 )
 
+// JSONLogParserConfig JSONLogParser configuration
+type JSONLogParserConfig struct {
+	TimestampField string `config:"timestamp_key" validate:"required"`
+	TimestampKing  string `config:"timestamp_format" validate:"required"`
+}
+
 // JSONLogParser JSON log parser
 type JSONLogParser struct {
 	timestampField string
 	timestampKind  kindElement
+}
+
+// NewJSONLogParserConfig creates a new JSON log parser based on a map os strins
+func NewJSONLogParserConfig(cfg *common.Config) (*JSONLogParser, error) {
+	var config JSONLogParserConfig
+	if err := cfg.Unpack(&config); err != nil {
+		return nil, err
+	}
+
+	timestampKind, err := kindFromString(config.TimestampKing)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewJSONLogParser(config.TimestampField, timestampKind), nil
 }
 
 // NewJSONLogParser creates a new JSON log parser
@@ -39,29 +58,23 @@ LINE_READER:
 			return errReadString
 		}
 
-		var fields map[string]interface{}
-		if err := unmarshal([]byte(line), &fields); err != nil {
-			eh(line, fmt.Errorf("Couldn't parse json line (%s). Error: %+v", line, err))
-			continue LINE_READER
-		}
+		if line != "" && line != "\n" {
+			var fields map[string]interface{}
+			if err := unmarshal([]byte(line), &fields); err != nil {
+				eh(line, fmt.Errorf("Couldn't parse json line (%s). Error: %+v", line, err))
+				continue LINE_READER
+			}
 
-		timestamp, err := j.getTimestamp(&fields)
-		if err != nil {
-			eh(line, err)
-			continue LINE_READER
-		}
-		delete(fields, j.timestampField)
+			timestamp, err := j.getTimestamp(&fields)
+			if err != nil {
+				eh(line, err)
+				continue LINE_READER
+			}
+			delete(fields, j.timestampField)
 
-		h := sha1.New()
-		io.WriteString(h, line)
-		event := &beat.Event{
-			Timestamp: timestamp,
-			Fields:    fields,
-			Meta: common.MapStr{
-				"_id": hex.EncodeToString(h.Sum(nil)),
-			},
+			event := CreateEvent(&line, timestamp, fields)
+			mh(event)
 		}
-		mh(event)
 
 		if errReadString == io.EOF {
 			break

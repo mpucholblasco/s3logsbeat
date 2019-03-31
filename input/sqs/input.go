@@ -43,7 +43,7 @@ func NewInput(
 	}
 
 	var err error
-	p.logParser, err = logparser.GetPredefinedParser(p.config.LogFormat)
+	p.logParser, err = logparser.GetPredefinedParser(p.config.LogFormat, p.config.LogFormatOptions)
 	if err != nil {
 		return nil, err
 	}
