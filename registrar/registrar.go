@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
+	"github.com/sequra/s3logsbeat/pipeline"
 )
 
 // Registrar registers events published on pipeline

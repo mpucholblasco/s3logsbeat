@@ -3,7 +3,7 @@ package sqs
 import (
 	"fmt"
 
-	"github.com/mpucholblasco/s3logsbeat/input"
+	"github.com/sequra/s3logsbeat/input"
 )
 
 var (

@@ -6,7 +6,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/logp"
 
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/sequra/s3logsbeat/aws"
 )
 
 // SQSMessage SQS message to be passed thru pipeline.

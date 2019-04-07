@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mpucholblasco/s3logsbeat/input"
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
+	"github.com/sequra/s3logsbeat/input"
+	"github.com/sequra/s3logsbeat/pipeline"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
 	// Used to load all available inputs
-	_ "github.com/mpucholblasco/s3logsbeat/include"
+	_ "github.com/sequra/s3logsbeat/include"
 )
 
 // Crawler object

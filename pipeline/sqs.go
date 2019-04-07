@@ -2,7 +2,7 @@ package pipeline
 
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/sequra/s3logsbeat/aws"
 )
 
 // SQS SQS element to send thru pipeline

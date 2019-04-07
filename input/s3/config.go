@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mpucholblasco/s3logsbeat/input"
+	"github.com/sequra/s3logsbeat/input"
 )
 
 var (

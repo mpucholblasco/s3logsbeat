@@ -3,10 +3,10 @@ package beater
 import (
 	"fmt"
 
-	"github.com/mpucholblasco/s3logsbeat/config"
-	"github.com/mpucholblasco/s3logsbeat/crawler"
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
-	"github.com/mpucholblasco/s3logsbeat/registrar"
+	"github.com/sequra/s3logsbeat/config"
+	"github.com/sequra/s3logsbeat/crawler"
+	"github.com/sequra/s3logsbeat/pipeline"
+	"github.com/sequra/s3logsbeat/registrar"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"

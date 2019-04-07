@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/mpucholblasco/s3logsbeat/cmd"
+	"github.com/sequra/s3logsbeat/cmd"
 )
 
 func main() {

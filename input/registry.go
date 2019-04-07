@@ -3,7 +3,7 @@ package input
 import (
 	"fmt"
 
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
+	"github.com/sequra/s3logsbeat/pipeline"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"

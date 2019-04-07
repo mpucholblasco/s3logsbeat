@@ -3,8 +3,8 @@ package beater
 import (
 	"sync"
 
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
-	"github.com/mpucholblasco/s3logsbeat/registrar"
+	"github.com/sequra/s3logsbeat/pipeline"
+	"github.com/sequra/s3logsbeat/registrar"
 
 	"github.com/elastic/beats/libbeat/monitoring"
 )
