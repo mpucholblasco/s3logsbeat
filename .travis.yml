@@ -30,10 +30,10 @@ before_install:
   - umask 022
   - chmod -R go-w $GOPATH/src/github.com/elastic/beats
   # Redo the travis setup but with the elastic/libbeat path. This is needed so the package path is correct
-  - mkdir -p $HOME/gopath/src/github.com/mpucholblasco/s3logsbeat/
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/mpucholblasco/s3logsbeat/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/mpucholblasco/s3logsbeat/
-  - cd $HOME/gopath/src/github.com/mpucholblasco/s3logsbeat/
+  - mkdir -p $HOME/gopath/src/github.com/sequra/s3logsbeat/
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/sequra/s3logsbeat/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/sequra/s3logsbeat/
+  - cd $HOME/gopath/src/github.com/sequra/s3logsbeat/
 
 install:
   - true

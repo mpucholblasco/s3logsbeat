@@ -1,4 +1,4 @@
-module github.com/mpucholblasco/s3logsbeat
+module github.com/sequra/s3logsbeat
 
 require (
 	github.com/aws/aws-sdk-go v1.18.3

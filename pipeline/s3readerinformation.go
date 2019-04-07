@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/mpucholblasco/s3logsbeat/logparser"
+	"github.com/sequra/s3logsbeat/logparser"
 )
 
 // S3ReaderInformation information present on inputs needed at S3 reader stage

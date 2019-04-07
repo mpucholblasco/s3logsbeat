@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/mpucholblasco/s3logsbeat/aws"
+	"github.com/sequra/s3logsbeat/aws"
 )
 
 const (

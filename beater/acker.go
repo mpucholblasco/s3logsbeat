@@ -1,6 +1,8 @@
 package beater
 
-import "github.com/mpucholblasco/s3logsbeat/pipeline"
+import (
+	"github.com/sequra/s3logsbeat/pipeline"
+)
 
 // eventAcker handles publisher pipeline ACKs and forwards
 // them to the registrar.

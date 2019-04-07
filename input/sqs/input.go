@@ -1,10 +1,10 @@
 package sqs
 
 import (
-	"github.com/mpucholblasco/s3logsbeat/aws"
-	"github.com/mpucholblasco/s3logsbeat/input"
-	"github.com/mpucholblasco/s3logsbeat/logparser"
-	"github.com/mpucholblasco/s3logsbeat/pipeline"
+	"github.com/sequra/s3logsbeat/aws"
+	"github.com/sequra/s3logsbeat/input"
+	"github.com/sequra/s3logsbeat/logparser"
+	"github.com/sequra/s3logsbeat/pipeline"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"

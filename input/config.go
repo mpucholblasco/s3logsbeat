@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
-	cfg "github.com/mpucholblasco/s3logsbeat/config"
+	cfg "github.com/sequra/s3logsbeat/config"
 )
 
 // GlobalConfig global config for all kind of inputs

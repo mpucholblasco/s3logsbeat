@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/mpucholblasco/s3logsbeat/beater"
+	"github.com/sequra/s3logsbeat/beater"
 
 	cmd "github.com/elastic/beats/libbeat/cmd"
 )

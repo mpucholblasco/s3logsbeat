@@ -6,7 +6,7 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/mpucholblasco/s3logsbeat/cmd"
+	"github.com/sequra/s3logsbeat/cmd"
 )
 
 var systemTest *bool

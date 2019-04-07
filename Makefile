@@ -1,5 +1,5 @@
 BEAT_NAME=s3logsbeat
-BEAT_PATH=github.com/mpucholblasco/s3logsbeat
+BEAT_PATH=github.com/sequra/s3logsbeat
 BEAT_GOPATH=$(firstword $(subst :, ,${GOPATH}))
 BEAT_URL=https://${BEAT_PATH}
 SYSTEM_TESTS=false
