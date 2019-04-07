@@ -25,6 +25,8 @@ func GetPredefinedParser(n string, config *common.Config) (LogParser, error) {
 		return S3ALBLogParser, nil
 	case "cloudfront":
 		return S3CloudFrontWebLogParser, nil
+	case "waf":
+		return S3WAFLogParser, nil
 	case "json":
 		return NewJSONLogParserConfig(config)
 	}

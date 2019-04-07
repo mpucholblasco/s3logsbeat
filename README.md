@@ -33,7 +33,7 @@ S3logsbeat has the following features:
 * High availability: you can have several S3logsbeat running in parallel
 * Reliability: SQS messages are only deleted when output contains all events
 * Avoid duplicates on supported outputs
-* Supported S3 log parsers: ELB, ALB, CloudFront
+* Supported several S3 log formats (see [Suported log formats](#supported-log-formats))
 * Extra fields based on S3 key
 * Delayed shutdown based on timout and pending messages to be acked by outputs
 * Limited amount of resources: ~20MB RAM in my tests
@@ -194,6 +194,7 @@ can generate duplicates. In order to avoid this problem you can:
 * `elb`: parses Elastic Load Balancer (classic ELB) log.
 * `alb`: parses Application Load Balancer (ALB) log.
 * `cloudfront`: parses CloudFront logs.
+* `waf`: parses WAF logs.
 * `json`: parses JSON logs. Requires the following options (set via parameter `log_format_options`):
     * `timestamp_field`: field that represents the timestamp of log event. Mandatory.
     * `timestamp_format`: format in which timestamp is represented and from which should be converted into Date/Time. See [Suported timestamp formats](#supported-timestamp-formats). Mandatory.
