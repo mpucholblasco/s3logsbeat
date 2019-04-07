@@ -15,7 +15,7 @@ import (
 
 // JSONLogParserConfig JSONLogParser configuration
 type JSONLogParserConfig struct {
-	TimestampField string `config:"timestamp_key" validate:"required"`
+	TimestampField string `config:"timestamp_field" validate:"required"`
 	TimestampKing  string `config:"timestamp_format" validate:"required"`
 }
 
