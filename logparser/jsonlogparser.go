@@ -15,8 +15,8 @@ import (
 
 // JSONLogParserConfig JSONLogParser configuration
 type JSONLogParserConfig struct {
-	TimestampField string `config:"timestamp_field" validate:"required"`
-	TimestampKing  string `config:"timestamp_format" validate:"required"`
+	TimestampField  string `config:"timestamp_field" validate:"required"`
+	TimestampFormat string `config:"timestamp_format" validate:"required"`
 }
 
 // JSONLogParser JSON log parser
@@ -32,7 +32,7 @@ func NewJSONLogParserConfig(cfg *common.Config) (*JSONLogParser, error) {
 		return nil, err
 	}
 
-	timestampKind, err := kindFromString(config.TimestampKing)
+	timestampKind, err := kindFromString(config.TimestampFormat)
 	if err != nil {
 		return nil, err
 	}

@@ -192,7 +192,7 @@ func kindFromString(v string) (kindElement, error) {
 }
 
 // parseToKind parses a value to convert it into the kind passed as argument
-// NOTE: tried to impre performance (obtained ~46.5ns/op) by using functions inside kindElement
+// NOTE: tried to improve performance (obtained ~46.5ns/op) by using functions inside kindElement
 // but it did it slower (~90ns/op)
 func parseToKind(e kindElement, value interface{}) (interface{}, error) {
 	switch e.kind {
