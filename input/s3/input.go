@@ -1,4 +1,4 @@
-package sqs
+package s3
 
 import (
 	"github.com/sequra/s3logsbeat/aws"
