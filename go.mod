@@ -8,7 +8,6 @@ require (
 	github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901 // indirect
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/sequra/s3logsbeat v0.0.0-20190407090053-41cebb8188ae // indirect
 	github.com/stretchr/testify v1.3.0
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect

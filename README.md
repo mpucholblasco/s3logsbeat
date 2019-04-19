@@ -33,7 +33,7 @@ S3logsbeat has the following features:
 * High availability: you can have several S3logsbeat running in parallel
 * Reliability: SQS messages are only deleted when output contains all events
 * Avoid duplicates on supported outputs
-* Supported S3 log parsers: ELB, ALB, CloudFront
+* Supported several S3 log formats (see [Suported log formats](#supported-log-formats))
 * Extra fields based on S3 key
 * Delayed shutdown based on timout and pending messages to be acked by outputs
 * Limited amount of resources: ~20MB RAM in my tests
@@ -189,9 +189,26 @@ can generate duplicates. In order to avoid this problem you can:
   cli, analyse the element present on the SQS queue without deleting it (it will reappear later). Then edit yaml configuration
   and set the `to` property to just one second before the one obtained and execute `s3imports` command.
 
+### Supported log formats
+`s3logsbeat` supports the following log formats:
+* `elb`: parses Elastic Load Balancer (classic ELB) log.
+* `alb`: parses Application Load Balancer (ALB) log.
+* `cloudfront`: parses CloudFront logs.
+* `waf`: parses WAF logs.
+* `json`: parses JSON logs. Requires the following options (set via parameter `log_format_options`):
+    * `timestamp_field`: field that represents the timestamp of log event. Mandatory.
+    * `timestamp_format`: format in which timestamp is represented and from which should be converted into Date/Time. See [Suported timestamp formats](#supported-timestamp-formats). Mandatory.
+
+### Supported timestamp formats
+The following timestamp formats are supported:
+* `timeUnixMilliseconds`: long or string with epoc millis.
+* `timeISO8601`: string with ISO8601 format.
+* `time:layout`: string with layout format present after prefix `time:`. Valid layouts correspond to ones parsed by [time.Parse](https://golang.org/pkg/time/#Parse).
+
 ### Example of events
 
 #### ALB
+The following log event example is generated when `log_format: alb` is present:
 ```
 {
   "_index" : "yourindex-2018.09.14",
@@ -235,7 +252,7 @@ can generate duplicates. In order to avoid this problem you can:
 These fields corresond to the ones established by AWS on [this page](https://docs.aws.amazon.com/es_es/elasticloadbalancing/latest/application/load-balancer-access-logs.html).
 
 #### CloudFront
-Events generated from CloudFront logs are in the following form:
+The following log event example is generated when `log_format: cloudfront` is present:
 ```
 {
   "_index" : "yourindex-2018.09.02",
