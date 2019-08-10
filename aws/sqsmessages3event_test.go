@@ -217,3 +217,63 @@ func TestS3CreateEventIncorrectlyEncoded(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, uint64(0), c)
 }
+
+func TestS3CreateEventMultiPartUpload(t *testing.T) {
+	body := `
+	{
+    "Records": [
+			{
+					"eventVersion": "2.1",
+					"eventSource": "aws:s3",
+					"awsRegion": "eu-west-1",
+					"eventTime": "2019-08-09T17:40:00.623Z",
+					"eventName": "ObjectCreated:CompleteMultipartUpload",
+					"userIdentity": {
+							"principalId": "AWS:AIDAUUSOPYXONJ6WWRD54"
+					},
+					"requestParameters": {
+							"sourceIPAddress": "199.27.72.20"
+					},
+					"responseElements": {
+							"x-amz-request-id": "F53AE4D787EE7FBD",
+							"x-amz-id-2": "GeYFbT+p3UpK/4EslyHGfnA/n95Ie7eUHWpDficcI21vLzrjpiETX6M1Ea/ORXq3LlWZWvvaWt8="
+					},
+					"s3": {
+							"s3SchemaVersion": "1.0",
+							"configurationId": "my-logs",
+							"bucket": {
+									"name": "mybucket",
+									"ownerIdentity": {
+											"principalId": "ABC1EFGHIJKLM"
+									},
+									"arn": "arn:aws:s3:::mybucket"
+							},
+							"object": {
+									"key": "2019-08-09T17-35-00.000-4EOusK9ws_69koeNqTBf.log",
+									"size": 28897,
+									"eTag": "1f40ff64a9136f43f8915ed4f6640339-1",
+									"sequencer": "005D4DAF014D3FE184"
+							}
+					}
+			}
+    ]
+	}
+	`
+	h := md5.New()
+	io.WriteString(h, body)
+	md5body := hex.EncodeToString(h.Sum(nil))
+	message := &sqs.Message{
+		Body:          &body,
+		MD5OfBody:     &md5body,
+		MessageId:     aws.String("fakeMessageId"),
+		ReceiptHandle: aws.String("fakeReceipt"),
+	}
+	s := NewSQSMessageS3Event(newSQSMessage(message))
+	c, err := s.ExtractNewObjects(func(s *S3Object) error {
+		assert.Equal(t, "mybucket", s.Bucket)
+		assert.Equal(t, "2019-08-09T17-35-00.000-4EOusK9ws_69koeNqTBf.log", s.Key)
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), c)
+}

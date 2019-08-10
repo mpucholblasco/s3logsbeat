@@ -3,6 +3,7 @@ package aws
 import (
 	"encoding/json"
 	"net/url"
+	"strings"
 
 	"github.com/elastic/beats/libbeat/logp"
 )
@@ -46,7 +47,7 @@ func (s *SQSMessageS3Event) ExtractNewObjects(mh func(*S3Object) error) (uint64,
 	}
 	var c uint64
 	for _, e := range s3e.Records {
-		if e.EventSource == "aws:s3" && e.EventName == "ObjectCreated:Put" {
+		if e.EventSource == "aws:s3" && strings.HasPrefix(e.EventName, "ObjectCreated:") {
 			if s3key, err := url.QueryUnescape(e.S3.Object.Key); err != nil {
 				logp.Warn("Could not unescape S3 object: %s", e.S3.Object.Key)
 			} else {
