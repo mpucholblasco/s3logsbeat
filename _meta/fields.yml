@@ -161,14 +161,15 @@
       type: text
       description: >
         If the viewer used an HTTP proxy or a load balancer to send the request, the value of c-ip in field 5 is the IP address of the proxy or load balancer. In that case, x-forwarded-for is the IP address of the viewer that originated the request
-    - name: ssl_protocol
-      type: text
-      description: >
-        When cs-protocol in field 17 is https, the SSL protocol that the client and CloudFront negotiated for transmitting the request and response
-    - name: ssl_cipher
-      type: text
-      description: >
-        When cs-protocol in field 17 is https, the SSL cipher that the client and CloudFront negotiated for encrypting the request and response
+    # Present on ALB fields
+    #- name: ssl_protocol
+    #  type: keyword
+    #  description: >
+    #    When cs-protocol in field 17 is https, the SSL protocol that the client and CloudFront negotiated for transmitting the request and response
+    #- name: ssl_cipher
+    #  type: keyword
+    #  description: >
+    #    When cs-protocol in field 17 is https, the SSL cipher that the client and CloudFront negotiated for encrypting the request and response
     - name: x_edge_response_result_type
       type: text
       description: >

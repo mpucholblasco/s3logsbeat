@@ -1,31 +1,35 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
+    "@timestamp": "2017-10-12T08:05:34.853Z",
+    "agent": {
         "hostname": "host.example.com",
         "name": "host.example.com"
     },
+    "event": {
+        "dataset": "system.network",
+        "duration": 115000,
+        "module": "system"
+    },
     "metricset": {
-        "host": "localhost",
-        "module": "system",
-        "name": "network",
-        "rtt": 115
+        "name": "network"
+    },
+    "service": {
+        "type": "system"
     },
     "system": {
         "network": {
             "in": {
-                "bytes": 0,
-                "dropped": 0,
+                "bytes": 37904869172,
+                "dropped": 32,
                 "errors": 0,
-                "packets": 0
+                "packets": 32143403
             },
-            "name": "sit0",
+            "name": "wlp4s0",
             "out": {
-                "bytes": 0,
+                "bytes": 6299331926,
                 "dropped": 0,
                 "errors": 0,
-                "packets": 0
+                "packets": 13362703
             }
         }
-    },
-    "type": "metricsets"
+    }
 }

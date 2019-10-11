@@ -21,7 +21,7 @@ type S3logsbeat struct {
 	client beat.Client
 }
 
-// New creates beater
+// NewS3logsbeat creates beater
 func NewS3logsbeat(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	config := config.DefaultConfig
 	if err := cfg.Unpack(&config); err != nil {
@@ -75,15 +75,10 @@ func (bt *S3logsbeat) Run(b *beat.Beat) error {
 	// Make sure all events that were published in
 	registrarChannel := newRegistrarLogger(registrar)
 
-	err = b.Publisher.SetACKHandler(beat.PipelineACKHandler{
-		ACKEvents: newEventACKer(registrarChannel).ackEvents,
+	bt.client, err = b.Publisher.ConnectWith(beat.ClientConfig{
+		PublishMode: beat.GuaranteedSend,
+		ACKEvents:   newEventACKer(registrarChannel).ackEvents,
 	})
-	if err != nil {
-		logp.Err("Failed to install the registry with the publisher pipeline: %v", err)
-		return err
-	}
-
-	bt.client, err = b.Publisher.Connect()
 	if err != nil {
 		return err
 	}

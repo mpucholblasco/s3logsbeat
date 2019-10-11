@@ -7,3 +7,5 @@ exclude_files: [".gz$"]
 multiline:
   pattern: "^\\s"
   match: after
+processors:
+- add_locale: ~

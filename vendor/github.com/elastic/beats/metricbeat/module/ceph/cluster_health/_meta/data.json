@@ -1,6 +1,6 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
+    "@timestamp": "2017-10-12T08:05:34.853Z",
+    "agent": {
         "hostname": "host.example.com",
         "name": "host.example.com"
     },
@@ -16,11 +16,16 @@
             }
         }
     },
-    "metricset": {
-        "host": "127.0.0.1:5000",
-        "module": "ceph",
-        "name": "cluster_health",
-        "rtt": 115
+    "event": {
+        "dataset": "ceph.cluster_health",
+        "duration": 115000,
+        "module": "ceph"
     },
-    "type": "metricsets"
+    "metricset": {
+        "name": "cluster_health"
+    },
+    "service": {
+        "address": "127.0.0.1:5000",
+        "type": "ceph"
+    }
 }

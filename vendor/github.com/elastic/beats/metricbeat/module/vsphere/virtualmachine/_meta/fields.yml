@@ -2,15 +2,20 @@
   type: group
   description: >
     virtualmachine
+  release: beta
   fields:
-    - name: datacenter
+    - name: host
       type: keyword
       description: >
-        Datacenter name
+        Host name
     - name: name
       type: keyword
       description: >
         Virtual Machine name
+    - name: os
+      type: keyword
+      description: >
+        Virtual Machine Operating System name
     - name: cpu.used.mhz
       type: long
       description: >
@@ -38,5 +43,9 @@
     - name: custom_fields
       type: object
       object_type: keyword
-      descripton: >
-        Custom fields      
+      description: >
+        Custom fields
+    - name: network_names
+      type: keyword
+      description: >
+        Network names

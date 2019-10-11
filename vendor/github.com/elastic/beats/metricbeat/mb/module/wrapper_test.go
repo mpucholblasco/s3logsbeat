@@ -1,3 +1,20 @@
+// Licensed to Elasticsearch B.V. under one or more contributor
+// license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright
+// ownership. Elasticsearch B.V. licenses this file to you under
+// the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 // +build !integration
 
 package module_test
@@ -121,7 +138,7 @@ func TestWrapperOfEventFetcher(t *testing.T) {
 		"hosts":      hosts,
 	})
 
-	m, err := module.NewWrapper(0, c, newTestRegistry(t))
+	m, err := module.NewWrapper(c, newTestRegistry(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +171,7 @@ func TestWrapperOfReportingFetcher(t *testing.T) {
 		"hosts":      hosts,
 	})
 
-	m, err := module.NewWrapper(0, c, newTestRegistry(t))
+	m, err := module.NewWrapper(c, newTestRegistry(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,7 +204,7 @@ func TestWrapperOfPushMetricSet(t *testing.T) {
 		"hosts":      hosts,
 	})
 
-	m, err := module.NewWrapper(0, c, newTestRegistry(t))
+	m, err := module.NewWrapper(c, newTestRegistry(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,8 +215,7 @@ func TestWrapperOfPushMetricSet(t *testing.T) {
 	<-output
 	close(done)
 
-	// Validate that the channel is closed after receiving the two
-	// initial events.
+	// Validate that the channel is closed after receiving the event.
 	select {
 	case _, ok := <-output:
 		if !ok {
@@ -208,5 +224,49 @@ func TestWrapperOfPushMetricSet(t *testing.T) {
 		} else {
 			assert.Fail(t, "received unexpected event")
 		}
+	}
+}
+
+func TestPeriodIsAddedToEvent(t *testing.T) {
+	cases := map[string]struct {
+		metricset string
+		hasPeriod bool
+	}{
+		"fetch metricset events should have period": {
+			metricset: eventFetcherName,
+			hasPeriod: true,
+		},
+		"push metricset events should not have period": {
+			metricset: pushMetricSetName,
+			hasPeriod: false,
+		},
+	}
+
+	registry := newTestRegistry(t)
+
+	for title, c := range cases {
+		t.Run(title, func(t *testing.T) {
+			hosts := []string{"alpha"}
+			config := newConfig(t, map[string]interface{}{
+				"module":     moduleName,
+				"metricsets": []string{c.metricset},
+				"hosts":      hosts,
+			})
+
+			m, err := module.NewWrapper(config, registry, module.WithMetricSetInfo())
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			done := make(chan struct{})
+			defer close(done)
+
+			output := m.Start(done)
+
+			event := <-output
+
+			hasPeriod, _ := event.Fields.HasKey("metricset.period")
+			assert.Equal(t, c.hasPeriod, hasPeriod, "has metricset.period in event %+v", event)
+		})
 	}
 }

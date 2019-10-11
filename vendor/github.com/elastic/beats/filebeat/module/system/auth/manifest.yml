@@ -12,4 +12,4 @@ var:
     os.windows: []
 
 ingest_pipeline: ingest/pipeline.json
-prospector: config/auth.yml
+input: config/auth.yml

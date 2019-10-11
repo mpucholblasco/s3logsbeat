@@ -40,18 +40,6 @@ func (self *LoadAverage) Get() error {
 	return nil
 }
 
-func (self *Uptime) Get() error {
-	tv := syscall.Timeval32{}
-
-	if err := sysctlbyname("kern.boottime", &tv); err != nil {
-		return err
-	}
-
-	self.Length = time.Since(time.Unix(int64(tv.Sec), int64(tv.Usec)*1000)).Seconds()
-
-	return nil
-}
-
 func (self *Mem) Get() error {
 	var vmstat C.vm_statistics_data_t
 
@@ -89,6 +77,10 @@ func (self *Swap) Get() error {
 	self.Free = sw_usage.Avail
 
 	return nil
+}
+
+func (self *HugeTLBPages) Get() error {
+	return ErrNotImplemented{runtime.GOOS}
 }
 
 func (self *Cpu) Get() error {
@@ -420,6 +412,11 @@ func kern_procargs(pid int,
 			return fmt.Errorf("Error reading args: %v", err)
 		}
 		pair := bytes.SplitN(chop(line), delim, 2)
+
+		if len(pair) != 2 {
+			return fmt.Errorf("Error reading process information for PID: %d", pid)
+		}
+
 		env(string(pair[0]), string(pair[1]))
 	}
 

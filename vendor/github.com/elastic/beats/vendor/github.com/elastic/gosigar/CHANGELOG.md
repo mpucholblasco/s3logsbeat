@@ -6,11 +6,103 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+### Fixed
+
 ### Changed
 
 ### Deprecated
 
+## [0.10.5]
+
+### Fixed
+
+- Fixed uptime calculation under Windows. #126
+- Fixed compilation issue for darwin/386. #128
+
+### Changed
+
+- Load DLLs only from Windows system directory. #132
+
+## [0.10.4]
+
+### Fixed
+
+- Fixed a crash when splitting command-line arguments under Windows. #124
+
+## [0.10.3]
+
+### Fixed
+- ProcState.Get() doesn't fail under Windows when it cannot obtain process ownership information. #121
+
+## [0.10.2]
+
+### Fixed
+- Fix memory leak when getting process arguments. #119
+
+## [0.10.1]
+
+### Fixed
+- Replaced the WMI queries with win32 apis due to high CPU usage. #116
+
+## [0.10.0]
+
+### Added
+- List filesystems on Windows that have an access path but not an assigned letter. #112
+
+### Fixed
+- Added missing runtime import for FreeBSD. #104
+- Handle nil command line in Windows processes. #110
+
+## [0.9.0]
+
+### Added
+- Added support for huge TLB pages on Linux #97  
+- Added support for big endian platform #100 
+
+### Fixed
+- Add missing method for OpenBSD #99
+
+## [0.8.0]
+
+### Added
+- Added partial `getrusage` support for Windows to retrieve system CPU time and user CPU time. #95
+- Added full `getrusage` support for Unix. #95
+
+## [0.7.0]
+
+### Added
+- Added method stubs for process handling for operating system that are not supported
+  by gosigar. All methods return `ErrNotImplemented` on such systems. #88
+
+### Fixed
+- Fix freebsd build by using the common version of Get(pid). #91
+
+### Changed
+- Fixed issues in cgroup package by adding missing error checks and closing
+  file handles. #92
+
+## [0.6.0]
+
+### Added
+- Added method stubs to enable compilation for operating systems that are not
+  supported by gosigar. All methods return `ErrNotImplemented` on these unsupported
+  operating systems. #83
+- FreeBSD returns `ErrNotImplemented` for `ProcTime.Get`. #83
+
+### Changed
+- OpenBSD returns `ErrNotImplemented` for `ProcTime.Get` instead of `nil`. #83
+- Fixed incorrect `Mem.Used` calculation under linux. #82
+- Fixed `ProcState` on Linux and FreeBSD when process names contain parentheses. #81
+
 ### Removed
+- Remove NetBSD build from sigar_unix.go as it is not supported by gosigar. #83
+
+## [0.5.0]
+
+### Changed
+- Fixed Trim environment variables when comparing values in the test suite. #79
+- Make `kern_procargs` more robust under darwin when we cannot retrieve
+  all the information about a process. #78
 
 ## [0.4.0]
 

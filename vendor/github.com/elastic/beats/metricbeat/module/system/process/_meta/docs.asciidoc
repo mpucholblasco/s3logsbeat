@@ -1,5 +1,3 @@
-=== System process metricset
-
 The System `process` metricset provides process statistics. One document is
 provided for each process.
 
@@ -78,6 +76,10 @@ metricbeat.modules:
   metricsets: ["process"]
   process.include_cpu_ticks: true
 ----
+
+*`process.include_per_cpu`*:: By default metrics per cpu are reported when
+available. Setting this option to false will disable the reporting of these
+metrics.
 
 *`process.include_top_n`*:: These options allow you to filter out all processes
 that are not in the top N by CPU or memory, in order to reduce the number of

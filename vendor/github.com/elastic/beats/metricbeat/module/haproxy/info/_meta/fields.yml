@@ -2,6 +2,7 @@
   type: group
   description: >
     General information about HAProxy processes.
+  release: ga
   fields:
     - name: processes
       type: long
@@ -14,7 +15,9 @@
         Process number.
 
     - name: pid
-      type: long
+      type: alias
+      path: process.pid
+      migration: true
       description: >
         Process ID.
 

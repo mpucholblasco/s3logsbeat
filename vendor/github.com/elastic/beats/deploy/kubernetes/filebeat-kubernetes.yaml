@@ -6,22 +6,33 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: filebeat
-    kubernetes.io/cluster-service: "true"
 data:
   filebeat.yml: |-
-    filebeat.config:
-      prospectors:
-        # Mounted `filebeat-prospectors` configmap:
-        path: ${path.config}/prospectors.d/*.yml
-        # Reload prospectors configs as they change:
-        reload.enabled: false
-      modules:
-        path: ${path.config}/modules.d/*.yml
-        # Reload module configs as they change:
-        reload.enabled: false
+    filebeat.inputs:
+    - type: container
+      paths:
+        - /var/log/containers/*.log
+      processors:
+        - add_kubernetes_metadata:
+            host: ${NODE_NAME}
+            matchers:
+            - logs_path:
+                logs_path: "/var/log/containers/"
+
+    # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
+    #filebeat.autodiscover:
+    #  providers:
+    #    - type: kubernetes
+    #      host: ${NODE_NAME}
+    #      hints.enabled: true
+    #      hints.default_config:
+    #        type: container
+    #        paths:
+    #          - /var/log/containers/*${data.kubernetes.container.id}.log
 
     processors:
       - add_cloud_metadata:
+      - add_host_metadata:
 
     cloud.id: ${ELASTIC_CLOUD_ID}
     cloud.auth: ${ELASTIC_CLOUD_AUTH}
@@ -31,26 +42,6 @@ data:
       username: ${ELASTICSEARCH_USERNAME}
       password: ${ELASTICSEARCH_PASSWORD}
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: filebeat-prospectors
-  namespace: kube-system
-  labels:
-    k8s-app: filebeat
-    kubernetes.io/cluster-service: "true"
-data:
-  kubernetes.yml: |-
-    - type: log
-      paths:
-        - /var/lib/docker/containers/*/*.log
-      json.message_key: log
-      json.keys_under_root: true
-      processors:
-        - add_kubernetes_metadata:
-            in_cluster: true
-            namespace: ${POD_NAMESPACE}
----
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
@@ -58,19 +49,19 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: filebeat
-    kubernetes.io/cluster-service: "true"
 spec:
   template:
     metadata:
       labels:
         k8s-app: filebeat
-        kubernetes.io/cluster-service: "true"
     spec:
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: docker.elastic.co/beats/filebeat:6.0.1
+        image: docker.elastic.co/beats/filebeat:7.4.0
         args: [
           "-c", "/etc/filebeat.yml",
           "-e",
@@ -88,12 +79,14 @@ spec:
           value:
         - name: ELASTIC_CLOUD_AUTH
           value:
-        - name: POD_NAMESPACE
+        - name: NODE_NAME
           valueFrom:
             fieldRef:
-              fieldPath: metadata.namespace
+              fieldPath: spec.nodeName
         securityContext:
           runAsUser: 0
+          # If using Red Hat OpenShift uncomment this:
+          #privileged: true
         resources:
           limits:
             memory: 200Mi
@@ -105,13 +98,13 @@ spec:
           mountPath: /etc/filebeat.yml
           readOnly: true
           subPath: filebeat.yml
-        - name: prospectors
-          mountPath: /usr/share/filebeat/prospectors.d
-          readOnly: true
         - name: data
           mountPath: /usr/share/filebeat/data
         - name: varlibdockercontainers
           mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log
           readOnly: true
       volumes:
       - name: config
@@ -121,12 +114,14 @@ spec:
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
-      - name: prospectors
-        configMap:
-          defaultMode: 0600
-          name: filebeat-prospectors
+      - name: varlog
+        hostPath:
+          path: /var/log
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
       - name: data
-        emptyDir: {}
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding

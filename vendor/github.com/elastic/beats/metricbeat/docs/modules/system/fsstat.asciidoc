@@ -1,8 +1,10 @@
 ////
-This file is generated! See scripts/docs_collector.py
+This file is generated! See scripts/mage/docs_collector.go
 ////
 
 [[metricbeat-metricset-system-fsstat]]
+=== System fsstat metricset
+
 include::../../../module/system/fsstat/_meta/docs.asciidoc[]
 
 

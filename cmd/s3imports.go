@@ -15,7 +15,7 @@ func genS3ImportsCmd(name, version string, beatCreator beat.Creator, runFlags *p
 		Use:   "s3imports",
 		Short: "Imports s3 objects to ElasticSearch and stops",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := instance.Run(name, version, beatCreator)
+			err := instance.Run(instance.Settings{Name: name, Version: version}, beatCreator)
 			if err != nil {
 				os.Exit(1)
 			}

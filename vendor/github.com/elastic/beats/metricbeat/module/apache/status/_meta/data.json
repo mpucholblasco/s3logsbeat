@@ -1,9 +1,9 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
+    "@timestamp": "2019-03-01T08:05:34.853Z",
     "apache": {
         "status": {
-            "bytes_per_request": 1024,
-            "bytes_per_sec": 0.201113,
+            "bytes_per_request": 112.913,
+            "bytes_per_sec": 103.832,
             "connections": {
                 "async": {
                     "closing": 0,
@@ -15,17 +15,16 @@
             "cpu": {
                 "children_system": 0,
                 "children_user": 0,
-                "load": 0.00652482,
-                "system": 1.46,
-                "user": 1.53
+                "load": 0.125874,
+                "system": 0.2,
+                "user": 0.16
             },
-            "hostname": "apache",
             "load": {
-                "1": 0.55,
-                "15": 0.31,
-                "5": 0.31
+                "1": 2,
+                "15": 1.91,
+                "5": 1.85
             },
-            "requests_per_sec": 0.000196399,
+            "requests_per_sec": 0.91958,
             "scoreboard": {
                 "closing_connection": 0,
                 "dns_lookup": 0,
@@ -40,11 +39,11 @@
                 "total": 400,
                 "waiting_for_connection": 74
             },
-            "total_accesses": 9,
-            "total_kbytes": 9,
+            "total_accesses": 263,
+            "total_kbytes": 29,
             "uptime": {
-                "server_uptime": 45825,
-                "uptime": 45825
+                "server_uptime": 286,
+                "uptime": 286
             },
             "workers": {
                 "busy": 1,
@@ -52,15 +51,17 @@
             }
         }
     },
-    "beat": {
-        "hostname": "host.example.com",
-        "name": "host.example.com"
+    "event": {
+        "dataset": "apache.status",
+        "duration": 115000,
+        "module": "apache"
     },
     "metricset": {
-        "host": "apache",
-        "module": "apache",
         "name": "status",
-        "rtt": 115
+        "period": 10000
     },
-    "type": "metricsets"
+    "service": {
+        "address": "127.0.0.1:55555",
+        "type": "apache"
+    }
 }

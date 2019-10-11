@@ -1,29 +1,32 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
+    "@timestamp": "2017-10-12T08:05:34.853Z",
+    "agent": {
         "hostname": "host.example.com",
         "name": "host.example.com"
     },
     "ceph": {
-        "df": {
-            "stats": {
-                "available": {
-                    "bytes": 5040500736
-                },
-                "total": {
-                    "bytes": 6431965184
-                },
-                "used": {
-                    "bytes": 1391464448
-                }
+        "cluster_disk": {
+            "available": {
+                "bytes": 0
+            },
+            "total": {
+                "bytes": 0
+            },
+            "used": {
+                "bytes": 0
             }
         }
     },
-    "metricset": {
-        "host": "ceph:5000",
-        "module": "ceph",
-        "name": "df",
-        "rtt": 115
+    "event": {
+        "dataset": "ceph.cluster_disk",
+        "duration": 115000,
+        "module": "ceph"
     },
-    "type": "metricsets"
+    "metricset": {
+        "name": "cluster_disk"
+    },
+    "service": {
+        "address": "127.0.0.1:5000",
+        "type": "ceph"
+    }
 }

@@ -1,6 +1,11 @@
-== Prometheus module
+This module periodically scrapes metrics from
+https://prometheus.io/docs/instrumenting/exporters/[Prometheus exporters].
 
-beta[]
+[float]
+=== Dashboard
 
-This module periodically fetches metrics from
-https://prometheus.io/docs/[Prometheus].
+The Prometheus module comes with a predefined dashboard for Prometheus specific stats. For example:
+
+image::./images/metricbeat-prometheus-overview.png[]
+
+

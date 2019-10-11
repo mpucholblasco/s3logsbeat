@@ -1,30 +1,36 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
+    "@timestamp": "2017-10-12T08:05:34.853Z",
+    "agent": {
         "hostname": "host.example.com",
         "name": "host.example.com"
     },
+    "event": {
+        "dataset": "system.cpu",
+        "duration": 115000,
+        "module": "system"
+    },
     "metricset": {
-        "module": "system",
-        "name": "cpu",
-        "rtt": 115
+        "name": "cpu"
+    },
+    "service": {
+        "type": "system"
     },
     "system": {
         "cpu": {
-            "cores": 8,
+            "cores": 4,
             "idle": {
                 "norm": {
-                    "pct": 0.8851
+                    "pct": 0.7198
                 },
-                "pct": 7.0811,
-                "ticks": 1680102981
+                "pct": 2.8792,
+                "ticks": 81308898
             },
             "iowait": {
                 "norm": {
                     "pct": 0
                 },
                 "pct": 0,
-                "ticks": 0
+                "ticks": 499109
             },
             "irq": {
                 "norm": {
@@ -38,14 +44,14 @@
                     "pct": 0
                 },
                 "pct": 0,
-                "ticks": 0
+                "ticks": 172471
             },
             "softirq": {
                 "norm": {
                     "pct": 0
                 },
                 "pct": 0,
-                "ticks": 0
+                "ticks": 578041
             },
             "steal": {
                 "norm": {
@@ -56,17 +62,23 @@
             },
             "system": {
                 "norm": {
-                    "pct": 0.0412
+                    "pct": 0.0591
                 },
-                "pct": 0.3296,
-                "ticks": 42755361
+                "pct": 0.2365,
+                "ticks": 25140781
+            },
+            "total": {
+                "norm": {
+                    "pct": 0.2802
+                },
+                "pct": 1.1208
             },
             "user": {
                 "norm": {
-                    "pct": 0.0737
+                    "pct": 0.2211
                 },
-                "pct": 0.5893,
-                "ticks": 50330417
+                "pct": 0.8843,
+                "ticks": 75216920
             }
         }
     }

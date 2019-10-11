@@ -2,11 +2,8 @@
   type: group
   description: >
     kubernetes replica set metrics
+  release: ga
   fields:
-    - name: name
-      type: keyword
-      description: >
-        Kubernetes replica set name
     - name: replicas
       type: group
       description: >

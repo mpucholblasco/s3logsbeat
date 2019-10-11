@@ -4,6 +4,7 @@ This file is generated! See scripts/docs_collector.py
 
 [[filebeat-module-system]]
 :modulename: system
+:has-dashboards: true
 
 == System module
 
@@ -17,10 +18,6 @@ include::../include/what-happens.asciidoc[]
 
 This module was tested with logs from OSes like Ubuntu 12.04, Centos 7, and
 macOS Sierra.
-
-This module requires the
-{elasticsearch-plugins}/ingest-user-agent.html[ingest-user-agent] and
-{elasticsearch-plugins}/ingest-geoip.html[ingest-geoip] Elasticsearch plugins.
 
 This module is not available for Windows.
 
@@ -37,7 +34,7 @@ image::./images/kibana-system.png[]
 include::../include/configuring-intro.asciidoc[]
 
 The following example shows how to set paths in the +modules.d/{modulename}.yml+
-file to override the default paths for the syslog and authorization logs: 
+file to override the default paths for the syslog and authorization logs:
 
 ["source","yaml",subs="attributes"]
 -----
@@ -55,8 +52,10 @@ To specify the same settings at the command line, you use:
 
 ["source","sh",subs="attributes"]
 -----
-./{beatname_lc} --modules {modulename} -M "system.syslog.var.paths=[/path/to/log/syslog*]" -M "system.auth.var.paths=[/path/to/log/auth.log*]"
+-M "system.syslog.var.paths=[/path/to/log/syslog*]" -M "system.auth.var.paths=[/path/to/log/auth.log*]"
 -----
+
+
 
 
 //set the fileset name used in the included example
@@ -74,6 +73,14 @@ include::../include/var-paths.asciidoc[]
 ==== `auth` fileset settings
 
 include::../include/var-paths.asciidoc[]
+
+include::../include/timezone-support.asciidoc[]
+
+:has-dashboards!:
+
+:fileset_ex!:
+
+:modulename!:
 
 
 [float]

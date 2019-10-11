@@ -1,29 +1,25 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
-        "hostname": "host.example.com",
-        "name": "host.example.com"
-    },
+    "@timestamp": "2019-03-01T08:05:34.853Z",
     "couchbase": {
         "cluster": {
             "hdd": {
                 "free": {
-                    "bytes": 49181251462
+                    "bytes": 46902679716
                 },
                 "quota": {
                     "total": {
-                        "bytes": 67371577344
+                        "bytes": 63381999616
                     }
                 },
                 "total": {
-                    "bytes": 67371577344
+                    "bytes": 63381999616
                 },
                 "used": {
                     "by_data": {
-                        "bytes": 16356812
+                        "bytes": 16369010
                     },
                     "value": {
-                        "bytes": 18190325882
+                        "bytes": 16479319900
                     }
                 }
             },
@@ -56,24 +52,30 @@
                     }
                 },
                 "total": {
-                    "bytes": 2096275456
+                    "bytes": 8359174144
                 },
                 "used": {
                     "by_data": {
-                        "bytes": 53962160
+                        "bytes": 53962016
                     },
                     "value": {
-                        "bytes": 1235513344
+                        "bytes": 8004751360
                     }
                 }
             }
         }
     },
-    "metricset": {
-        "host": "localhost:8091",
-        "module": "couchbase",
-        "name": "cluster",
-        "rtt": 115
+    "event": {
+        "dataset": "couchbase.cluster",
+        "duration": 115000,
+        "module": "couchbase"
     },
-    "type": "metricsets"
+    "metricset": {
+        "name": "cluster",
+        "period": 10000
+    },
+    "service": {
+        "address": "127.0.0.1:55555",
+        "type": "couchbase"
+    }
 }

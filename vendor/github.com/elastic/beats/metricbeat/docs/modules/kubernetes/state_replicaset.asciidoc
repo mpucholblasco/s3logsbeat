@@ -1,8 +1,10 @@
 ////
-This file is generated! See scripts/docs_collector.py
+This file is generated! See scripts/mage/docs_collector.go
 ////
 
 [[metricbeat-metricset-kubernetes-state_replicaset]]
+=== Kubernetes state_replicaset metricset
+
 include::../../../module/kubernetes/state_replicaset/_meta/docs.asciidoc[]
 
 

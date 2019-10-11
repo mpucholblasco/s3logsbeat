@@ -1,3 +1,20 @@
+// Licensed to Elasticsearch B.V. under one or more contributor
+// license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright
+// ownership. Elasticsearch B.V. licenses this file to you under
+// the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package memqueue
 
 import (
@@ -87,7 +104,7 @@ func (l *directEventLoop) run() {
 		case req := <-l.events: // producer pushing new event
 			l.handleInsert(&req)
 
-		case req := <-l.pubCancel: // producer cancellig active events
+		case req := <-l.pubCancel: // producer cancelling active events
 			l.handleCancel(&req)
 
 		case req := <-l.get: // consumer asking for next batch
@@ -242,7 +259,7 @@ func (l *directEventLoop) processACK(lst chanList, N int) {
 		count := (st.seq - st.state.lastACK)
 		if count == 0 || count > math.MaxUint32/2 {
 			// seq number comparison did underflow. This happens only if st.seq has
-			// allready been acknowledged
+			// already been acknowledged
 			// log.Debug("seq number already acked: ", st.seq)
 
 			st.state = nil
@@ -508,7 +525,7 @@ func (l *bufferingEventLoop) processACK(lst chanList, N int) {
 			count := st.seq - st.state.lastACK
 			if count == 0 || count > math.MaxUint32/2 {
 				// seq number comparison did underflow. This happens only if st.seq has
-				// allready been acknowledged
+				// already been acknowledged
 				// log.Debug("seq number already acked: ", st.seq)
 
 				st.state = nil

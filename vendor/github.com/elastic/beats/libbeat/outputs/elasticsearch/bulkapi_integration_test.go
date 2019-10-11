@@ -1,3 +1,20 @@
+// Licensed to Elasticsearch B.V. under one or more contributor
+// license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright
+// ownership. Elasticsearch B.V. licenses this file to you under
+// the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 // +build integration
 
 package elasticsearch
@@ -11,11 +28,9 @@ import (
 )
 
 func TestBulk(t *testing.T) {
-	if testing.Verbose() {
-		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"elasticsearch"})
-	}
+	logp.TestingSetup(logp.WithSelectors("elasticsearch"))
 
-	client := GetTestingElasticsearch(t)
+	client := getTestingElasticsearch(t)
 	index := fmt.Sprintf("packetbeat-unittest-%d", os.Getpid())
 
 	ops := []map[string]interface{}{
@@ -51,8 +66,8 @@ func TestBulk(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SearchUri() returns an error: %s", err)
 	}
-	if result.Hits.Total != 1 {
-		t.Errorf("Wrong number of search results: %d", result.Hits.Total)
+	if result.Hits.Total.Value != 1 {
+		t.Errorf("Wrong number of search results: %d", result.Hits.Total.Value)
 	}
 
 	_, _, err = client.Delete(index, "", "", nil)
@@ -62,11 +77,9 @@ func TestBulk(t *testing.T) {
 }
 
 func TestEmptyBulk(t *testing.T) {
-	if testing.Verbose() {
-		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"elasticsearch"})
-	}
+	logp.TestingSetup(logp.WithSelectors("elasticsearch"))
 
-	client := GetTestingElasticsearch(t)
+	client := getTestingElasticsearch(t)
 	index := fmt.Sprintf("packetbeat-unittest-%d", os.Getpid())
 
 	body := make([]interface{}, 0, 10)
@@ -84,11 +97,9 @@ func TestEmptyBulk(t *testing.T) {
 }
 
 func TestBulkMoreOperations(t *testing.T) {
-	if testing.Verbose() {
-		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"elasticsearch"})
-	}
+	logp.TestingSetup(logp.WithSelectors("elasticsearch"))
 
-	client := GetTestingElasticsearch(t)
+	client := getTestingElasticsearch(t)
 	index := fmt.Sprintf("packetbeat-unittest-%d", os.Getpid())
 
 	ops := []map[string]interface{}{
@@ -156,8 +167,8 @@ func TestBulkMoreOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SearchUri() returns an error: %s", err)
 	}
-	if result.Hits.Total != 1 {
-		t.Errorf("Wrong number of search results: %d", result.Hits.Total)
+	if result.Hits.Total.Value != 1 {
+		t.Errorf("Wrong number of search results: %d", result.Hits.Total.Value)
 	}
 
 	params = map[string]string{
@@ -167,8 +178,8 @@ func TestBulkMoreOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SearchUri() returns an error: %s", err)
 	}
-	if result.Hits.Total != 1 {
-		t.Errorf("Wrong number of search results: %d", result.Hits.Total)
+	if result.Hits.Total.Value != 1 {
+		t.Errorf("Wrong number of search results: %d", result.Hits.Total.Value)
 	}
 
 	_, _, err = client.Delete(index, "", "", nil)

@@ -9,6 +9,7 @@ import (
 	"github.com/sequra/s3logsbeat/beater"
 
 	cmd "github.com/elastic/beats/libbeat/cmd"
+	"github.com/elastic/beats/libbeat/cmd/instance"
 )
 
 // Name of this beat
@@ -28,7 +29,7 @@ func init() {
 	runFlags.AddGoFlag(flag.CommandLine.Lookup("keepsqsmessages"))
 
 	RootCmd = &BeatsRootCmd{
-		BeatsRootCmd: cmd.GenRootCmdWithRunFlags(Name, "", beater.NewS3logsbeat, runFlags),
+		BeatsRootCmd: cmd.GenRootCmdWithSettings(beater.NewS3logsbeat, instance.Settings{Name: Name, RunFlags: runFlags}),
 		S3ExportsCmd: genS3ImportsCmd(Name, "", beater.NewS3importsbeat, nil),
 	}
 	RootCmd.AddCommand(RootCmd.S3ExportsCmd)

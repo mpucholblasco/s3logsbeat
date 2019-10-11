@@ -1,5 +1,5 @@
 - key: common
-  title: "Common Heartbeat Monitor"
+  title: "Common heartbeat monitor"
   description:
   fields:
     - name: monitor
@@ -25,19 +25,23 @@
 
         - name: duration
           type: group
-          description: total monitoring test duration
+          description: Total monitoring test duration
           fields:
             - name: us
               type: long
               description: Duration in microseconds
 
         - name: scheme
-          type: keyword
+          type: alias
+          path: url.scheme
+          migration: true
           description: >
             Address url scheme. For example `tcp`, `tls`, `http`, and `https`.
 
         - name: host
-          type: keyword
+          type: alias
+          path: url.domain
+          migration: true
           description: >
             Hostname of service being monitored. Can be missing, if service is
             monitored by IP.
@@ -54,8 +58,30 @@
           description: >
             Indicator if monitor could validate the service to be available.
 
+        - name: check_group
+          type: keyword
+          description: >
+            A token unique to a simultaneously invoked group of checks as in the case where multiple IPs are checked for a single DNS entry.
+
+- key: summary
+  title: "Monitor summary"
+  description:
+  fields:
+    - name: summary
+      type: group
+      description: "Present in the last event emitted during a check. If a monitor checks multiple endpoints, as is the case with `mode: all`."
+      fields:
+        - name: up
+          type: integer
+          description: >
+            The number of endpoints that succeeded
+        - name: down
+          type: integer
+          description: >
+            The number of endpoints that failed
+
 - key: resolve
-  title: "Host Lookup"
+  title: "Host lookup"
   description:
   fields:
     - name: resolve
@@ -64,7 +90,9 @@
         Host lookup fields.
       fields:
         - name: host
-          type: keyword
+          type: alias
+          path: url.domain
+          migration: true
           description: >
             Hostname of service being monitored.
 

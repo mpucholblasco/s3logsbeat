@@ -1,28 +1,33 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
+    "@timestamp": "2017-10-12T08:05:34.853Z",
+    "agent": {
         "hostname": "host.example.com",
         "name": "host.example.com"
     },
+    "event": {
+        "dataset": "nginx.stubstatus",
+        "duration": 115000,
+        "module": "nginx"
+    },
     "metricset": {
-        "host": "nginx",
-        "module": "nginx",
-        "name": "stubstatus",
-        "rtt": 115
+        "name": "stubstatus"
     },
     "nginx": {
         "stubstatus": {
-            "accepts": 22,
-            "active": 1,
-            "current": 10,
+            "accepts": 6254,
+            "active": 2,
+            "current": 1,
             "dropped": 0,
-            "handled": 22,
-            "hostname": "nginx",
+            "handled": 6254,
+            "hostname": "127.0.0.1",
             "reading": 0,
-            "requests": 10,
-            "waiting": 0,
+            "requests": 6259,
+            "waiting": 1,
             "writing": 1
         }
     },
-    "type": "metricsets"
+    "service": {
+        "address": "127.0.0.1",
+        "type": "nginx"
+    }
 }

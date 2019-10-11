@@ -1,3 +1,20 @@
+// Licensed to Elasticsearch B.V. under one or more contributor
+// license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright
+// ownership. Elasticsearch B.V. licenses this file to you under
+// the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 package http
 
 import (
@@ -5,18 +22,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/elastic/beats/libbeat/outputs"
+	"github.com/elastic/beats/libbeat/conditions"
+
+	"github.com/elastic/beats/libbeat/common/match"
+	"github.com/elastic/beats/libbeat/common/transport/tlscommon"
 
 	"github.com/elastic/beats/heartbeat/monitors"
 )
 
 type Config struct {
-	Name string `config:"name"`
-
-	URLs         []string      `config:"urls" validate:"required"`
-	ProxyURL     string        `config:"proxy_url"`
-	Timeout      time.Duration `config:"timeout"`
-	MaxRedirects int           `config:"max_redirects"`
+	URLs         []string       `config:"urls" validate:"required"`
+	ProxyURL     string         `config:"proxy_url"`
+	Timeout      time.Duration  `config:"timeout"`
+	MaxRedirects int            `config:"max_redirects"`
+	Response     responseConfig `config:"response"`
 
 	Mode monitors.IPSettings `config:",inline"`
 
@@ -25,10 +44,15 @@ type Config struct {
 	Password string `config:"password"`
 
 	// configure tls (if not configured HTTPS will use system defaults)
-	TLS *outputs.TLSConfig `config:"ssl"`
+	TLS *tlscommon.Config `config:"ssl"`
 
 	// http(s) ping validation
 	Check checkConfig `config:"check"`
+}
+
+type responseConfig struct {
+	IncludeBody         string `config:"include_body"`
+	IncludeBodyMaxBytes int    `config:"include_body_max_bytes"`
 }
 
 type checkConfig struct {
@@ -50,9 +74,15 @@ type requestParameters struct {
 
 type responseParameters struct {
 	// expected HTTP response configuration
-	Status      uint16            `config:"status" verify:"min=0, max=699"`
-	RecvHeaders map[string]string `config:"headers"`
-	RecvBody    string            `config:"body"`
+	Status      uint16               `config:"status" verify:"min=0, max=699"`
+	RecvHeaders map[string]string    `config:"headers"`
+	RecvBody    []match.Matcher      `config:"body"`
+	RecvJSON    []*jsonResponseCheck `config:"json"`
+}
+
+type jsonResponseCheck struct {
+	Description string             `config:"description"`
+	Condition   *conditions.Config `config:"condition"`
 }
 
 type compressionConfig struct {
@@ -61,10 +91,13 @@ type compressionConfig struct {
 }
 
 var defaultConfig = Config{
-	Name:         "http",
 	Timeout:      16 * time.Second,
 	MaxRedirects: 10,
-	Mode:         monitors.DefaultIPSettings,
+	Response: responseConfig{
+		IncludeBody:         "on_error",
+		IncludeBodyMaxBytes: 2048,
+	},
+	Mode: monitors.DefaultIPSettings,
 	Check: checkConfig{
 		Request: requestParameters{
 			Method:      "GET",
@@ -74,9 +107,24 @@ var defaultConfig = Config{
 		Response: responseParameters{
 			Status:      0,
 			RecvHeaders: nil,
-			RecvBody:    "",
+			RecvBody:    []match.Matcher{},
+			RecvJSON:    nil,
 		},
 	},
+}
+
+func (r *responseConfig) Validate() error {
+	switch strings.ToLower(r.IncludeBody) {
+	case "always", "on_error", "never":
+	default:
+		return fmt.Errorf("unknown option for `include_body`: '%s', please use one of 'always', 'on_error', 'never'", r.IncludeBody)
+	}
+
+	if r.IncludeBodyMaxBytes <= 0 {
+		return fmt.Errorf("include_body_max_bytes must be a positive integer, got %d", r.IncludeBodyMaxBytes)
+	}
+
+	return nil
 }
 
 func (r *requestParameters) Validate() error {

@@ -3,7 +3,6 @@ package aws
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io"
 
 	"github.com/elastic/beats/libbeat/logp"
@@ -25,11 +24,6 @@ func newSQSMessage(message *sqs.Message) *SQSMessage {
 	logp.Info("Generated new SQS message with ID %s", *message.MessageId)
 
 	return sqsMessage
-}
-
-// String converts to String
-func (sm *SQSMessage) String() string {
-	return fmt.Sprintf("%+v", sm.String())
 }
 
 // VerifyMD5Sum returns true if MD5 passed on message corresponds with the one

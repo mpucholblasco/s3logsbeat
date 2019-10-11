@@ -10,8 +10,7 @@ class Test(metricbeat.BaseTest):
 
     def common_checks(self, output):
         # Ensure no errors or warnings exist in the log.
-        log = self.get_log()
-        self.assertNotRegexpMatches(log, "ERR|WARN")
+        self.assert_no_logged_warnings()
 
         for evt in output:
             top_level_fields = metricbeat.COMMON_FIELDS + ["postgresql"]
@@ -20,8 +19,14 @@ class Test(metricbeat.BaseTest):
             self.assert_fields_are_documented(evt)
 
     def get_hosts(self):
-        return [os.getenv("POSTGRESQL_DSN")], os.getenv("POSTGRESQL_USERNAME"), \
-            os.getenv("POSTGRESQL_PASSWORD")
+        username = "postgres"
+        host = self.compose_host()
+        dsn = "postgres://{}?sslmode=disable".format(host)
+        return (
+            [dsn],
+            username,
+            os.getenv("POSTGRESQL_PASSWORD"),
+        )
 
     @unittest.skipUnless(metricbeat.INTEGRATION_TESTS, "integration test")
     @attr('integration')

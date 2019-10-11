@@ -1,26 +1,22 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
-    "beat": {
-        "hostname": "host.example.com",
-        "name": "host.example.com"
-    },
+    "@timestamp": "2017-10-12T08:05:34.853Z",
     "couchbase": {
         "bucket": {
             "data": {
                 "used": {
-                    "bytes": 12585517
+                    "bytes": 3371588
                 }
             },
             "disk": {
                 "fetches": 0,
                 "used": {
-                    "bytes": 16356812
+                    "bytes": 9473
                 }
             },
-            "item_count": 7303,
+            "item_count": 0,
             "memory": {
                 "used": {
-                    "bytes": 53962160
+                    "bytes": 49976304
                 }
             },
             "name": "beer-sample",
@@ -30,16 +26,22 @@
                     "bytes": 104857600
                 },
                 "use": {
-                    "pct": 51.46232604980469
+                    "pct": 47.66111755371094
                 }
-            }
+            },
+            "type": "membase"
         }
     },
-    "metricset": {
-        "host": "localhost:8091",
-        "module": "couchbase",
-        "name": "bucket",
-        "rtt": 115
+    "event": {
+        "dataset": "couchbase.bucket",
+        "duration": 115000,
+        "module": "couchbase"
     },
-    "type": "membase"
+    "metricset": {
+        "name": "bucket"
+    },
+    "service": {
+        "address": "192.168.160.7:8091",
+        "type": "couchbase"
+    }
 }

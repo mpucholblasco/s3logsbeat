@@ -4,6 +4,11 @@ from filebeat import BaseTest
 import os
 import codecs
 import time
+import base64
+import io
+import re
+import unittest
+from parameterized import parameterized
 
 """
 Test Harvesters
@@ -12,6 +17,7 @@ Test Harvesters
 
 class Test(BaseTest):
 
+    @unittest.skip('flaky test https://github.com/elastic/beats/issues/12037')
     def test_close_renamed(self):
         """
         Checks that a file is closed when its renamed / rotated
@@ -58,6 +64,10 @@ class Test(BaseTest):
         self.wait_until(
             lambda: self.output_has(lines=iterations1 + 1), max_timeout=10)
 
+        # Wait until registry file is created
+        self.wait_until(
+            lambda: self.log_contains_count("Registry file updated") > 1)
+
         # Make sure new file was picked up. As it has the same file name,
         # one entry for the new and one for the old should exist
         self.wait_until(
@@ -69,6 +79,7 @@ class Test(BaseTest):
         data = self.get_registry()
         assert len(data) == 2
 
+    @unittest.skipIf(os.name == 'nt', 'flaky test https://github.com/elastic/beats/issues/9214')
     def test_close_removed(self):
         """
         Checks that a file is closed if removed
@@ -272,7 +283,7 @@ class Test(BaseTest):
         # Wait until state is written
         self.wait_until(
             lambda: self.log_contains(
-                "Registrar states cleaned up"),
+                "Registrar state updates processed"),
             max_timeout=15)
 
         filebeat.check_kill_and_wait()
@@ -401,6 +412,9 @@ class Test(BaseTest):
         for n in range(0, iterations1):
             file.write("example data")
             file.write("\n")
+            # Make sure some contents are written to disk so the harvested is able to read it.
+            file.flush()
+            os.fsync(file)
             time.sleep(0.001)
 
         file.close()
@@ -431,7 +445,6 @@ class Test(BaseTest):
 
         os.mkdir(self.working_dir + "/log/")
         self.copy_files(["logs/bom8.log"],
-                        source_dir="../files",
                         target_dir="log")
 
         filebeat = self.start_beat()
@@ -445,7 +458,12 @@ class Test(BaseTest):
 
         filebeat.check_kill_and_wait()
 
-    def test_boms(self):
+    @parameterized.expand([
+        ("utf-8", "utf-8", codecs.BOM_UTF8),
+        ("utf-16be-bom", "utf-16-be", codecs.BOM_UTF16_BE),
+        ("utf-16le-bom", "utf-16-le", codecs.BOM_UTF16_LE),
+    ])
+    def test_boms(self, fb_encoding, py_encoding, bom):
         """
         Test bom log files if bom is removed properly
         """
@@ -455,45 +473,35 @@ class Test(BaseTest):
 
         message = "Hello World"
 
-        # Config array contains:
-        # filebeat encoding, python encoding name, bom
-        configs = [
-            ("utf-8", "utf-8", codecs.BOM_UTF8),
-            ("utf-16be-bom", "utf-16-be", codecs.BOM_UTF16_BE),
-            ("utf-16le-bom", "utf-16-le", codecs.BOM_UTF16_LE),
-        ]
+        # Render config with specific encoding
+        self.render_config_template(
+            path=os.path.abspath(self.working_dir) + "/log/" + fb_encoding + "*",
+            encoding=fb_encoding,
+            output_file_filename=fb_encoding,
+        )
 
-        for config in configs:
+        logfile = self.working_dir + "/log/" + fb_encoding + "test.log"
 
-            # Render config with specific encoding
-            self.render_config_template(
-                path=os.path.abspath(self.working_dir) + "/log/*",
-                encoding=config[0],
-                output_file_filename=config[0],
-            )
+        # Write bom to file
+        with codecs.open(logfile, 'wb') as file:
+            file.write(bom)
 
-            logfile = self.working_dir + "/log/" + config[0] + "test.log"
+        # Write hello world to file
+        with codecs.open(logfile, 'a', py_encoding) as file:
+            content = message + '\n'
+            file.write(content)
 
-            # Write bom to file
-            with codecs.open(logfile, 'wb') as file:
-                file.write(config[2])
+        filebeat = self.start_beat(output=fb_encoding + ".log")
 
-            # Write hello world to file
-            with codecs.open(logfile, 'a', config[1]) as file:
-                content = message + '\n'
-                file.write(content)
+        self.wait_until(
+            lambda: self.output_has(lines=1, output_file="output/" + fb_encoding),
+            max_timeout=10)
 
-            filebeat = self.start_beat(output=config[0] + ".log")
+        # Verify that output does not contain bom
+        output = self.read_output_json(output_file="output/" + fb_encoding)
+        assert output[0]["message"] == message
 
-            self.wait_until(
-                lambda: self.output_has(lines=1, output_file="output/" + config[0]),
-                max_timeout=10)
-
-            # Verify that output does not contain bom
-            output = self.read_output_json(output_file="output/" + config[0])
-            assert output[0]["message"] == message
-
-            filebeat.kill_and_wait()
+        filebeat.kill_and_wait()
 
     def test_ignore_symlink(self):
         """
@@ -778,18 +786,22 @@ class Test(BaseTest):
         """
         self.render_config_template(
             path=os.path.abspath(self.working_dir) + "/log/*",
-            encoding="GBK",  # Set invalid encoding for entry below which is actually uft-8
+            encoding="utf-16be",
         )
 
         os.mkdir(self.working_dir + "/log/")
 
         logfile = self.working_dir + "/log/test.log"
 
-        with open(logfile, 'w') as file:
-            file.write("hello world1" + "\n")
-
-            file.write('<meta content="瞭解「Google 商業解決方案」提供的各類服務軟件如何助您分析資料、刊登廣告、提升網站成效等。" name="description">' + '\n')
-            file.write("hello world2" + "\n")
+        with io.open(logfile, 'w', encoding="utf-16le") as file:
+            file.write(u'hello world1')
+            file.write(u"\n")
+        with io.open(logfile, 'a', encoding="utf-16le") as file:
+            file.write(u"\U00012345=Ra")
+        with io.open(logfile, 'a', encoding="utf-16le") as file:
+            file.write(u"\n")
+            file.write(u"hello world2")
+            file.write(u"\n")
 
         filebeat = self.start_beat()
 
@@ -800,7 +812,7 @@ class Test(BaseTest):
 
         # Wait until error shows up
         self.wait_until(
-            lambda: self.log_contains("Error decoding line: simplifiedchinese: invalid GBK encoding"),
+            lambda: self.log_contains("Error decoding line: transform: short source buffer"),
             max_timeout=5)
 
         filebeat.check_kill_and_wait()
@@ -811,3 +823,37 @@ class Test(BaseTest):
 
         output = self.read_output_json()
         assert output[2]["message"] == "hello world2"
+
+    def test_debug_reader(self):
+        """
+        Test that you can enable a debug reader.
+        """
+        self.render_config_template(
+            path=os.path.abspath(self.working_dir) + "/log/*",
+        )
+
+        os.mkdir(self.working_dir + "/log/")
+
+        logfile = self.working_dir + "/log/test.log"
+
+        file = open(logfile, 'w', 0)
+        file.write("hello world1")
+        file.write("\n")
+        file.write("\x00\x00\x00\x00")
+        file.write("\n")
+        file.write("hello world2")
+        file.write("\n")
+        file.write("\x00\x00\x00\x00")
+        file.write("Hello World\n")
+        # Write some more data to hit the 16k min buffer size.
+        # Make it web safe.
+        file.write(base64.b64encode(os.urandom(16 * 1024)))
+        file.close()
+
+        filebeat = self.start_beat()
+
+        # 13 on unix, 14 on windows.
+        self.wait_until(lambda: self.log_contains(re.compile(
+            'Matching null byte found at offset (13|14)')), max_timeout=5)
+
+        filebeat.check_kill_and_wait()

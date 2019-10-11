@@ -1,5 +1,12 @@
-== Kibana module
+There are two modules that collect metrics about {kib}: 
 
-experimental[]
+* The Kibana module tracks only the high-level metrics. The default metricset in
+this module is `status`.
+* The Kibana X-Pack module enables you to monitor more Kibana metrics with our
+{stack-ov}/xpack-monitoring.html[monitoring] feature. The default metricset in
+this module is `stats`.
 
-The Kibana module only tracks the high-level metrics. To monitor more Kibana metrics, use our {monitoringdoc}/xpack-monitoring.html[X-Pack monitoring] which is available under a free basic license.
+[float]
+=== Compatibility
+
+The Kibana module is tested with Kibana 6.3.

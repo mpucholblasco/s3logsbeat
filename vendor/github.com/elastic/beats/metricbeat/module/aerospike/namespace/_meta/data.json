@@ -1,5 +1,5 @@
 {
-    "@timestamp": "2016-05-23T08:05:34.853Z",
+    "@timestamp": "2017-10-12T08:05:34.853Z",
     "aerospike": {
         "namespace": {
             "client": {
@@ -57,8 +57,8 @@
             },
             "name": "test",
             "node": {
-                "host": "127.0.0.1:3000",
-                "name": "BB94D7CC01BE20A"
+                "host": "172.26.0.2:3000",
+                "name": "BB902001AAC4202"
             },
             "objects": {
                 "master": 0,
@@ -67,14 +67,16 @@
             "stop_writes": false
         }
     },
-    "beat": {
-        "hostname": "host.example.com",
-        "name": "host.example.com"
+    "event": {
+        "dataset": "aerospike.namespace",
+        "duration": 115000,
+        "module": "aerospike"
     },
     "metricset": {
-        "host": "localhost:3000",
-        "module": "aerospike",
-        "name": "namespace",
-        "rtt": 115
+        "name": "namespace"
+    },
+    "service": {
+        "address": "172.26.0.2:3000",
+        "type": "aerospike"
     }
 }
